@@ -1,0 +1,296 @@
+-- He thong Quan Ly Rap Chieu Phim - MySQL 8+ (tieng Viet khong dau)
+create database qlrapchieuphim;
+use qlrapchieuphim;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Xoa bang theo thu tu phu thuoc
+DROP TABLE IF EXISTS don_khuyen_mai;
+DROP TABLE IF EXISTS thanh_toan;
+DROP TABLE IF EXISTS hang_hoa;
+DROP TABLE IF EXISTS don_ve;
+DROP TABLE IF EXISTS don_hang;
+DROP TABLE IF EXISTS combo_chi_tiet;
+DROP TABLE IF EXISTS combo;
+DROP TABLE IF EXISTS san_pham;
+DROP TABLE IF EXISTS ve;
+DROP TABLE IF EXISTS suat_chieu;
+DROP TABLE IF EXISTS ghe;
+DROP TABLE IF EXISTS loai_ghe;
+DROP TABLE IF EXISTS phong;
+DROP TABLE IF EXISTS dinh_dang;
+DROP TABLE IF EXISTS phim_the_loai;
+DROP TABLE IF EXISTS the_loai;
+DROP TABLE IF EXISTS phim;
+DROP TABLE IF EXISTS khach_hang;
+DROP TABLE IF EXISTS nhan_vien;
+DROP TABLE IF EXISTS tai_khoan;
+DROP TABLE IF EXISTS khuyen_mai;
+
+-- 1) Tai khoan & Nguoi dung
+CREATE TABLE tai_khoan (
+  ma_tai_khoan BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  email        VARCHAR(120) NOT NULL,
+  mat_khau_ma  VARCHAR(255) NOT NULL,
+  ho_ten       VARCHAR(120) NOT NULL,
+  so_dien_thoai VARCHAR(20),
+  vai_tro      ENUM('QUAN_TRI','NHAN_VIEN','KHACH_HANG') NOT NULL DEFAULT 'KHACH_HANG',
+  hoat_dong    TINYINT(1) NOT NULL DEFAULT 1,
+  tao_luc      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_tai_khoan),
+  UNIQUE KEY uq_tai_khoan_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE khach_hang (
+  ma_khach_hang BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_tai_khoan  BIGINT UNSIGNED UNIQUE,
+  diem_tich_luy INT UNSIGNED NOT NULL DEFAULT 0,
+  ngay_sinh     DATE,
+  tao_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_khach_hang),
+  CONSTRAINT fk_khachhang_taikhoan FOREIGN KEY (ma_tai_khoan)
+    REFERENCES tai_khoan(ma_tai_khoan) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE nhan_vien (
+  ma_nhan_vien BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_tai_khoan BIGINT UNSIGNED UNIQUE NOT NULL,
+  chuc_vu      VARCHAR(80),
+  ngay_vao_lam DATE,
+  tao_luc      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_nhan_vien),
+  CONSTRAINT fk_nhanvien_taikhoan FOREIGN KEY (ma_tai_khoan)
+    REFERENCES tai_khoan(ma_tai_khoan) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2) Phim & Phan loai
+CREATE TABLE phim (
+  ma_phim         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_phim        VARCHAR(200) NOT NULL,
+  thoi_luong_phut SMALLINT UNSIGNED NOT NULL, -- vi du 120
+  phan_loai       VARCHAR(20), -- P, T13, T16...
+  ngay_phat_hanh  DATE,
+  mo_ta           TEXT,
+  tao_luc         DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_phim)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE the_loai (
+  ma_the_loai   SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_the_loai  VARCHAR(60) NOT NULL,
+  tao_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_the_loai),
+  UNIQUE KEY uq_ten_the_loai (ten_the_loai)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE phim_the_loai (
+  ma_phim     BIGINT UNSIGNED NOT NULL,
+  ma_the_loai SMALLINT UNSIGNED NOT NULL,
+  PRIMARY KEY (ma_phim, ma_the_loai),
+  CONSTRAINT fk_phim_tl_phim FOREIGN KEY (ma_phim) REFERENCES phim(ma_phim) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_phim_tl_theloai FOREIGN KEY (ma_the_loai) REFERENCES the_loai(ma_the_loai) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE dinh_dang (
+  ma_dinh_dang  SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_dinh_dang VARCHAR(40) NOT NULL, -- 2D, 3D, IMAX,...
+  ghi_chu       VARCHAR(200),
+  tao_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_dinh_dang),
+  UNIQUE KEY uq_ten_dinh_dang (ten_dinh_dang)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3) Phong & Ghe
+CREATE TABLE phong (
+  ma_phong    BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_phong   VARCHAR(50) NOT NULL,
+  suc_chua    SMALLINT UNSIGNED NOT NULL,
+  trang_thai  ENUM('HOAT_DONG','BAO_TRI','NGUNG') NOT NULL DEFAULT 'HOAT_DONG',
+  tao_luc     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_phong),
+  UNIQUE KEY uq_ten_phong (ten_phong)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE loai_ghe (
+  ma_loai_ghe  SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_loai_ghe VARCHAR(40) NOT NULL, -- Thuong, VIP, Sweetbox...
+  he_so_gia    DECIMAL(5,2) NOT NULL,
+  tao_luc      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_loai_ghe),
+  UNIQUE KEY uq_ten_loai_ghe (ten_loai_ghe)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE ghe (
+  ma_ghe      BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_phong    BIGINT UNSIGNED NOT NULL,
+  hang_ghe    VARCHAR(5) NOT NULL,
+  so_ghe      SMALLINT UNSIGNED NOT NULL,
+  ma_loai_ghe SMALLINT UNSIGNED NOT NULL,
+  tao_luc     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_ghe),
+  UNIQUE KEY uq_phong_ghe (ma_phong, hang_ghe, so_ghe),
+  CONSTRAINT fk_ghe_phong FOREIGN KEY (ma_phong) REFERENCES phong(ma_phong) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ghe_loaighe FOREIGN KEY (ma_loai_ghe) REFERENCES loai_ghe(ma_loai_ghe) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4) Suat chieu & Ve (luu y: ket_thuc_luc khong generated tu bang khac; neu can, ban tu viet trigger)
+CREATE TABLE suat_chieu (
+  ma_suat_chieu BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_phim       BIGINT UNSIGNED NOT NULL,
+  ma_phong      BIGINT UNSIGNED NOT NULL,
+  ma_dinh_dang  SMALLINT UNSIGNED NOT NULL,
+  bat_dau_luc   DATETIME NOT NULL,
+  ket_thuc_luc  DATETIME NULL,
+  gia_co_ban    DECIMAL(10,2) NOT NULL,
+  trang_thai    ENUM('LEN_KE_HOACH','MO_BAN','DONG','HUY') NOT NULL DEFAULT 'LEN_KE_HOACH',
+  tao_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_suat_chieu),
+  UNIQUE KEY uq_phong_batdau (ma_phong, bat_dau_luc),
+  CONSTRAINT fk_sc_phim FOREIGN KEY (ma_phim) REFERENCES phim(ma_phim) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sc_phong FOREIGN KEY (ma_phong) REFERENCES phong(ma_phong) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT fk_sc_dinhdang FOREIGN KEY (ma_dinh_dang) REFERENCES dinh_dang(ma_dinh_dang) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE ve (
+  ma_ve          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_suat_chieu  BIGINT UNSIGNED NOT NULL,
+  ma_ghe         BIGINT UNSIGNED NOT NULL,
+  gia_ban        DECIMAL(10,2) NOT NULL,
+  trang_thai     ENUM('SAN_SANG','GIU_CHO','DA_BAN','HOAN','HUY') NOT NULL DEFAULT 'SAN_SANG',
+  giu_cho_luc    DATETIME NULL,
+  ban_luc        DATETIME NULL,
+  tao_luc        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_ve),
+  UNIQUE KEY uq_ve_unique (ma_suat_chieu, ma_ghe),
+  KEY idx_trang_thai (trang_thai),
+  CONSTRAINT fk_ve_sc FOREIGN KEY (ma_suat_chieu) REFERENCES suat_chieu(ma_suat_chieu) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_ve_ghe FOREIGN KEY (ma_ghe) REFERENCES ghe(ma_ghe) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5) Don hang, Hang hoa & Thanh toan
+CREATE TABLE don_hang (
+  ma_don_hang   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_khach_hang BIGINT UNSIGNED NULL,
+  dat_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  kenh          ENUM('TRUC_TIEP','TRUC_TUYEN') NOT NULL DEFAULT 'TRUC_TIEP',
+  trang_thai    ENUM('CHO_THANH_TOAN','DA_THANH_TOAN','DA_HUY','HOAN_TIEN') NOT NULL DEFAULT 'CHO_THANH_TOAN',
+  ghi_chu       VARCHAR(255),
+  tong_tien     DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  tao_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_don_hang),
+  CONSTRAINT fk_dh_khach FOREIGN KEY (ma_khach_hang) REFERENCES khach_hang(ma_khach_hang) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE don_ve (
+  ma_don_hang BIGINT UNSIGNED NOT NULL,
+  ma_ve       BIGINT UNSIGNED NOT NULL,
+  don_gia     DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (ma_don_hang, ma_ve),
+  CONSTRAINT fk_donve_donhang FOREIGN KEY (ma_don_hang) REFERENCES don_hang(ma_don_hang) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_donve_ve FOREIGN KEY (ma_ve) REFERENCES ve(ma_ve) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE san_pham (
+  ma_san_pham  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_san_pham VARCHAR(120) NOT NULL,
+  loai         ENUM('POPCORN','NUOC','AN_VAT','KHAC') NOT NULL,
+  gia          DECIMAL(10,2) NOT NULL,
+  hoat_dong    TINYINT(1) NOT NULL DEFAULT 1,
+  tao_luc      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_san_pham)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE combo (
+  ma_combo   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ten_combo  VARCHAR(120) NOT NULL,
+  gia        DECIMAL(10,2) NOT NULL,
+  hoat_dong  TINYINT(1) NOT NULL DEFAULT 1,
+  tao_luc    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_combo),
+  UNIQUE KEY uq_ten_combo (ten_combo)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE combo_chi_tiet (
+  ma_combo    BIGINT UNSIGNED NOT NULL,
+  ma_san_pham BIGINT UNSIGNED NOT NULL,
+  so_luong    SMALLINT UNSIGNED NOT NULL,
+  PRIMARY KEY (ma_combo, ma_san_pham),
+  CONSTRAINT fk_cbct_combo FOREIGN KEY (ma_combo) REFERENCES combo(ma_combo) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_cbct_sanpham FOREIGN KEY (ma_san_pham) REFERENCES san_pham(ma_san_pham) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+DROP TABLE IF EXISTS hang_hoa;
+CREATE TABLE hang_hoa (
+  ma_hang_hoa BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_don_hang BIGINT UNSIGNED NOT NULL,
+  ma_san_pham BIGINT UNSIGNED NULL,
+  ma_combo    BIGINT UNSIGNED NULL,
+  so_luong    INT UNSIGNED NOT NULL DEFAULT 1,
+  don_gia     DECIMAL(10,2) NOT NULL,
+  tao_luc     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_hang_hoa),
+  KEY idx_hang_hoa_dh (ma_don_hang),
+  CONSTRAINT fk_hanghoa_donhang FOREIGN KEY (ma_don_hang)
+    REFERENCES don_hang(ma_don_hang) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_hanghoa_sanpham FOREIGN KEY (ma_san_pham)
+    REFERENCES san_pham(ma_san_pham) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT fk_hanghoa_combo FOREIGN KEY (ma_combo)
+    REFERENCES combo(ma_combo) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+CREATE TABLE thanh_toan (
+  ma_thanh_toan BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_don_hang   BIGINT UNSIGNED NOT NULL,
+  so_tien       DECIMAL(12,2) NOT NULL,
+  phuong_thuc   ENUM('TIEN_MAT','THE','VI_DIEN_TU','CHUYEN_KHOAN') NOT NULL,
+  trang_thai    ENUM('CHO_XU_LY','THANH_CONG','THAT_BAI','HOAN_TIEN') NOT NULL DEFAULT 'THANH_CONG',
+  thanh_toan_luc DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ma_tham_chieu VARCHAR(100),
+  tao_luc       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_thanh_toan),
+  CONSTRAINT fk_thanhtoan_donhang FOREIGN KEY (ma_don_hang) REFERENCES don_hang(ma_don_hang) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 6) Khuyen mai
+CREATE TABLE khuyen_mai (
+  ma_khuyen_mai  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  ma_code        VARCHAR(40) NOT NULL,
+  kieu_giam      ENUM('PHAN_TRAM','SO_TIEN') NOT NULL,
+  gia_tri_giam   DECIMAL(10,2) NOT NULL,
+  bat_dau_luc    DATETIME NOT NULL,
+  ket_thuc_luc   DATETIME NOT NULL,
+  don_toi_thieu  DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+  hoat_dong      TINYINT(1) NOT NULL DEFAULT 1,
+  tao_luc        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  cap_nhat_luc   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ma_khuyen_mai),
+  UNIQUE KEY uq_khuyenmai_code (ma_code)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE don_khuyen_mai (
+  ma_don_hang   BIGINT UNSIGNED NOT NULL,
+  ma_khuyen_mai BIGINT UNSIGNED NOT NULL,
+  PRIMARY KEY (ma_don_hang, ma_khuyen_mai),
+  CONSTRAINT fk_dkm_don FOREIGN KEY (ma_don_hang) REFERENCES don_hang(ma_don_hang) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT fk_dkm_km FOREIGN KEY (ma_khuyen_mai) REFERENCES khuyen_mai(ma_khuyen_mai) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
