@@ -1,0 +1,134 @@
+/* Tông màu & biến lookups */
+.app {
+    -fx-font-family: "Segoe UI", "Roboto", "Inter", sans-serif;
+    -fx-text-fill: #1f2937;
+    -fx-bg: #0ea5e9;
+    -fx-bg-2: #111827;
+    -fx-card-bg: #ffffff;
+    -fx-muted: #6b7280;
+    -fx-accent: #0ea5e9; /* xanh cyan */
+}
+
+/* Topbar: gradient dịu, chữ nổi bật */
+.topbar {
+    -fx-background-color: linear-gradient(to right, #0ea5e9, #22d3ee);
+    -fx-alignment: CENTER_LEFT;
+}
+.brand {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-opacity: 0.95;
+}
+.topbar .text-field {
+    -fx-background-color: rgba(255,255,255,0.18);
+    -fx-text-fill: white;
+    -fx-prompt-text-fill: rgba(255,255,255,0.8);
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: rgba(255,255,255,0.25);
+    -fx-padding: 8 12 8 12;
+}
+.button-icon {
+    -fx-background-color: transparent;
+    -fx-padding: 8 10 8 10;
+    -fx-background-radius: 10;
+}
+.button-icon:hover {
+    -fx-background-color: rgba(255,255,255,0.18);
+}
+
+/* Sidebar */
+/* ==== SIDEBAR SÁNG ==== */
+.sidebar {
+    -fx-background-color: linear-gradient(to bottom, #f3f4f6, #e5e7eb); /* xám sáng */
+    -fx-padding: 12 0 12 0;
+    -fx-spacing: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0.2, 0, 2);
+}
+
+/* Nút trong sidebar */
+.nav-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1f2937;            /* xám đậm */
+    -fx-font-size: 15px;
+    -fx-font-weight: 500;
+    -fx-padding: 10 16 10 16;
+    -fx-alignment: CENTER_LEFT;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+    -fx-transition: all 0.3s ease;
+}
+
+.nav-button .image-view {
+    -fx-opacity: 0.85;
+    -fx-translate-y: -0.5;
+}
+
+/* Hover nhẹ màu xanh pastel */
+.nav-button:hover {
+    -fx-background-color: #dbeafe; /* xanh nhạt kiểu Tailwind */
+    -fx-text-fill: #1e3a8a;         /* xanh đậm hơn chữ */
+}
+
+/* Nút đang chọn (active) */
+.nav-button.active {
+    -fx-background-color: linear-gradient(to right, #3b82f6, #60a5fa);
+    -fx-text-fill: white;
+    -fx-font-weight: 600;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 10, 0.2, 0, 2);
+}
+
+/* Khi active thì icon sáng hơn */
+.nav-button.active .image-view {
+    -fx-opacity: 1;
+}
+
+/* Khi click (pressed) */
+.nav-button:pressed {
+    -fx-background-color: #bfdbfe; /* xanh nhạt hơn */
+    -fx-scale-x: 0.98;
+    -fx-scale-y: 0.98;
+}
+
+/* Cards */
+.card {
+    -fx-background-color: -fx-card-bg;
+    -fx-background-radius: 16;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.12), 20, 0.25, 0, 8);
+}
+.card-title {
+    -fx-text-fill: #6b7280; /* muted */
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-letter-spacing: 0.2px;
+}
+.card-value {
+    -fx-text-fill: #111827;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
+}
+.chart-placeholder {
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #f9fafb, #eef2ff);
+    -fx-background-radius: 12;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 12;
+    -fx-min-height: 180;
+}
+
+/* ScrollPane trong suốt, nội dung thoáng */
+.scroll-pane {
+    -fx-background-color: transparent;
+}
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Footer */
+.footer {
+    -fx-background-color: #f3f4f6;
+    -fx-border-color: #e5e7eb transparent transparent transparent;
+    -fx-border-width: 1;
+    -fx-font-size: 12px;
+    -fx-text-fill: #6b7280;
+}
