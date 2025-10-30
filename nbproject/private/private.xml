@@ -3,10 +3,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/E:/dowlo/Temp/QLRapChieuPhim/src/Application/Main.java</file>
-            <file>file:/E:/dowlo/Temp/QLRapChieuPhim/src/models/home.css</file>
-            <file>file:/E:/dowlo/Temp/QLRapChieuPhim/src/models/home.fxml</file>
-            <file>file:/E:/dowlo/Temp/QLRapChieuPhim/src/controllers/HomeController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/Application/Main.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/logup.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/styles.css</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/home.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/HomeController.java</file>
         </group>
     </open-files>
 </project-private>

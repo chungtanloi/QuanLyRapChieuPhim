@@ -1,17 +1,17 @@
-/* Tông màu & biến lookups */
+/*************  BIẾN & MẶC ĐỊNH  *************/
 .app {
     -fx-font-family: "Segoe UI", "Roboto", "Inter", sans-serif;
     -fx-text-fill: #1f2937;
-    -fx-bg: #0ea5e9;
-    -fx-bg-2: #111827;
-    -fx-card-bg: #ffffff;
+    -fx-primary: #e63946;    /* đỏ chủ đạo */
+    -fx-primary-dark: #c41e2e;
+    -fx-accent: #3b82f6;     /* xanh phụ nếu cần */
     -fx-muted: #6b7280;
-    -fx-accent: #0ea5e9; /* xanh cyan */
+    -fx-card-bg: #ffffff;
 }
 
-/* Topbar: gradient dịu, chữ nổi bật */
+/*************  TOPBAR (đỏ như web)  *************/
 .topbar {
-    -fx-background-color: linear-gradient(to right, #0ea5e9, #22d3ee);
+    -fx-background-color: linear-gradient(135deg, -fx-primary 0%, -fx-primary-dark 100%);
     -fx-alignment: CENTER_LEFT;
 }
 .brand {
@@ -22,29 +22,34 @@
 .topbar .text-field {
     -fx-background-color: rgba(255,255,255,0.18);
     -fx-text-fill: white;
-    -fx-prompt-text-fill: rgba(255,255,255,0.8);
+    -fx-prompt-text-fill: rgba(255,255,255,0.85);
     -fx-background-radius: 10;
     -fx-border-radius: 10;
     -fx-border-color: rgba(255,255,255,0.25);
     -fx-padding: 8 12 8 12;
 }
+/* Icon trong Button ở topbar/toolbar – FXML gán trên ImageView */
 .button-icon {
-    -fx-background-color: transparent;
-    -fx-padding: 8 10 8 10;
-    -fx-background-radius: 10;
-}
-.button-icon:hover {
-    -fx-background-color: rgba(255,255,255,0.18);
+    /* hiệu ứng hiển thị icon */
+    -fx-opacity: 0.95;
+    -fx-translate-y: -0.3px;
 }
 
-/* Sidebar */
+/* Nếu icon nằm trong Button có class .nav-button thì hover dùng nền của .nav-button sẵn có */
+.nav-button:hover .button-icon {
+    -fx-opacity: 1.0;
+}
+
+
+/*************  SIDEBAR (đỏ điện ảnh như web)  *************/
 /* ==== SIDEBAR SÁNG ==== */
 .sidebar {
-    -fx-background-color: linear-gradient(to bottom, #f3f4f6, #e5e7eb); /* xám sáng */
-    -fx-padding: 12 0 12 0;
+    -fx-background-color: linear-gradient(135deg, #e63946 0%, #c41e2e 100%);
+    -fx-padding: 16 12;
     -fx-spacing: 6;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.15), 10, 0.2, 0, 2);
+    -fx-pref-width: 260; /* rất quan trọng để controller lấy đúng width */
 }
+
 
 /* Nút trong sidebar */
 .nav-button {
@@ -89,8 +94,25 @@
     -fx-scale-x: 0.98;
     -fx-scale-y: 0.98;
 }
+/* Sidebar thu gọn: hẹp lại, nút gọn hơn (chỉ icon) */
+.sidebar.collapsed {
+    -fx-pref-width: 72;   /* chiều rộng khi gọn */
+    -fx-min-width: 72;
+    -fx-max-width: 72;
+}
 
-/* Cards */
+/* Khi gọn: giảm padding của các nav-button để icon canh giữa đẹp hơn */
+.sidebar.collapsed .nav-button {
+    -fx-padding: 10 10 10 10;
+}
+
+/* Bạn có thể ẩn chữ bằng code (GRAPHIC_ONLY). Nếu vẫn muốn CSS can thiệp,
+   có thể giảm opacity chữ một chút khi collapsed cho đồng bộ chuyển đổi: */
+.sidebar.collapsed .nav-button .text {
+    -fx-opacity: 0.0; /* chỉ hiệu ứng thị giác, thực tế ẩn chữ dùng code sẽ chắc hơn */
+}
+
+/*************  CARD / NỘI DUNG TRUNG TÂM  *************/
 .card {
     -fx-background-color: -fx-card-bg;
     -fx-background-radius: 16;
@@ -98,7 +120,7 @@
     -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.12), 20, 0.25, 0, 8);
 }
 .card-title {
-    -fx-text-fill: #6b7280; /* muted */
+    -fx-text-fill: #6b7280;
     -fx-font-size: 13px;
     -fx-font-weight: 600;
     -fx-letter-spacing: 0.2px;
@@ -109,26 +131,22 @@
     -fx-font-weight: 800;
 }
 .chart-placeholder {
-    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #f9fafb, #eef2ff);
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #f9fafb, #f3f4f6);
     -fx-background-radius: 12;
     -fx-border-color: #e5e7eb;
     -fx-border-radius: 12;
-    -fx-min-height: 180;
+    -fx-min-height: 200;
 }
 
-/* ScrollPane trong suốt, nội dung thoáng */
-.scroll-pane {
-    -fx-background-color: transparent;
-}
-.scroll-pane > .viewport {
-    -fx-background-color: transparent;
-}
+/*************  SCROLLPANE & FOOTER  *************/
+.scroll-pane { -fx-background-color: transparent; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }
 
-/* Footer */
 .footer {
     -fx-background-color: #f3f4f6;
     -fx-border-color: #e5e7eb transparent transparent transparent;
     -fx-border-width: 1;
     -fx-font-size: 12px;
     -fx-text-fill: #6b7280;
+    -fx-padding: 8 16 8 16;
 }
