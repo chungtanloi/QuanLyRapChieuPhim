@@ -43,6 +43,15 @@
                </font>
             </Label>
             <TextField promptText="Search" HBox.hgrow="ALWAYS" />
+            <Button contentDisplay="RIGHT" graphicTextGap="10.0" layoutX="816.0" layoutY="44.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="buttonbell">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" opacity="0.51" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../Application/image/search.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
             <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="buttonbell">
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
@@ -168,11 +177,11 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="399.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="246.0" style="-fx-border-color: #ffffffff; -fx-background-color: #00000000;" text="Cài đặt hệ thống">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="399.0" mnemonicParsing="false" prefHeight="46.0" prefWidth="246.0" style="-fx-border-color: #ffffffff; -fx-background-color: #00000000;" text="Quản lý sản phẩm">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../Application/image/settings.png" />
+                              <Image url="@../Application/image/shopping-bag.png" />
                            </image>
                         </ImageView>
                      </graphic>

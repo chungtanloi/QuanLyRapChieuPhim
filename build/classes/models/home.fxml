@@ -43,6 +43,15 @@
                </font>
             </Label>
             <TextField promptText="Search" HBox.hgrow="ALWAYS" />
+            <Button contentDisplay="RIGHT" graphicTextGap="10.0" layoutX="816.0" layoutY="44.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="buttonbell">
+               <graphic>
+                  <ImageView fitHeight="20.0" fitWidth="20.0" opacity="0.51" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../Application/image/search.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+            </Button>
             <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="buttonbell">
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
