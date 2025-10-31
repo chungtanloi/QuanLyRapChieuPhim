@@ -11,7 +11,6 @@ VALUES
   ('kh2.cantho@example.com', '$2y$10$hash', 'Tran Thi B',   '0909001002', 'KHACH_HANG')
 ON DUPLICATE KEY UPDATE ho_ten=VALUES(ho_ten);
 
-s
 INSERT INTO nhan_vien(ma_tai_khoan, chuc_vu, ngay_vao_lam)
 SELECT ma_tai_khoan, 'Thu ngan', DATE('2023-09-01') FROM tai_khoan WHERE email='staff.ct@cinema.vn'
 ON DUPLICATE KEY UPDATE chuc_vu=VALUES(chuc_vu);
@@ -1296,3 +1295,5 @@ FROM combo c, san_pham sp
 WHERE c.ten_combo='Combo 2 - 2 Nuoc + Bap' AND sp.ten_san_pham IN ('Bap rang 60oz','Nuoc ngot 22oz');
 
 SET FOREIGN_KEY_CHECKS=1;
+
+select * from don_hang;

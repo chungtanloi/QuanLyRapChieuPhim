@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
 
-<ScrollPane fitToWidth="true" prefHeight="433.0" prefWidth="498.0" style="-fx-padding:16;" stylesheets="@styles.css" BorderPane.alignment="CENTER" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1">
+<ScrollPane fitToWidth="true" prefHeight="433.0" prefWidth="498.0" style="-fx-padding:16;" stylesheets="@styles.css" BorderPane.alignment="CENTER" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.HomeController"
+>
             <content>
                 <!-- Đặt thẳng VBox làm content; bên trong là 2 GridPane -->
                 <VBox fillWidth="true" prefHeight="378.0" prefWidth="218.0" spacing="20" styleClass="content-area">
@@ -30,19 +43,19 @@
                             <StackPane maxWidth="Infinity" styleClass="stat-card" GridPane.hgrow="ALWAYS">
                                 <VBox alignment="CENTER" spacing="6">
                                     <Label styleClass="stat-title" text="Tổng doanh thu" />
-                                    <Label fx:id="lblRevenue" styleClass="stat-value" text="₫0" />
+                                    <Label fx:id="lblDoanhThuHomNay" styleClass="stat-value" text="₫0" />
                                 </VBox>
                             </StackPane>
                             <StackPane maxWidth="Infinity" styleClass="stat-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                                 <VBox alignment="CENTER" spacing="6">
                                     <Label styleClass="stat-title" text="Vé bán ra" />
-                                    <Label fx:id="lblTickets" styleClass="stat-value" text="0" />
+                                    <Label fx:id="lblTongVeBan" styleClass="stat-value" text="0" />
                                 </VBox>
                             </StackPane>
                             <StackPane maxWidth="Infinity" styleClass="stat-card" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
                                 <VBox alignment="CENTER" spacing="6">
                                     <Label styleClass="stat-title" text="Tỉ lệ lấp đầy" />
-                                    <Label fx:id="lblOccupancy" styleClass="stat-value" text="0%" />
+                                    <Label fx:id="lblTiLeLapDay" styleClass="stat-value" text="0%" />
                                 </VBox>
                             </StackPane>
                         </children>
@@ -61,14 +74,26 @@
                             <StackPane maxWidth="Infinity" styleClass="chart-card" GridPane.hgrow="ALWAYS">
                                 <VBox spacing="8">
                                     <Label styleClass="chart-title" text="Doanh thu 7 ngày gần nhất" />
-                                    <Region maxWidth="Infinity" prefHeight="260" styleClass="chart-placeholder" />
+                                    <LineChart fx:id="chartDoanhThu"
+                                               prefHeight="250.0" prefWidth="400.0"
+                                               
+                                               createSymbols="false"
+                                               legendVisible="false">
+                                        <xAxis>
+                                            <CategoryAxis fx:id="xAxisDoanhThu" label="Ngày" side="BOTTOM" />
+                                        </xAxis>
+                                        <yAxis>
+                                            <NumberAxis fx:id="yAxisDoanhThu" label="Doanh thu (VNĐ)" side="LEFT" />
+                                        </yAxis>
+                                    </LineChart>
                                 </VBox>
+
                             </StackPane>
 
                             <StackPane maxWidth="Infinity" styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
                                 <VBox spacing="8">
                                     <Label styleClass="chart-title" text="Doanh thu theo phim" />
-                                    <Region maxWidth="Infinity" prefHeight="260" styleClass="chart-placeholder" />
+                     <PieChart fx:id="chartPhanBoPhim" />
                                 </VBox>
                             </StackPane>
                         </children>
