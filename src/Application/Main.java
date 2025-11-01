@@ -14,7 +14,7 @@ public class Main extends Application {
     public void start(Stage stage) throws Exception {
         // DÙNG ĐƯỜNG DẪN TUYỆT ĐỐI (có dấu / ở đầu)
         URL url = Objects.requireNonNull(
-                Main.class.getResource("/models/form.fxml"),
+                Main.class.getResource("/models/login.fxml"),
                 "Không tìm thấy /models/home.fxml trên classpath. Hãy đặt file vào src/models/"
         );
         System.out.println("FXML URL = " + url); // debug: phải không null
