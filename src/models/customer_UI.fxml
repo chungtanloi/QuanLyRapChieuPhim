@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane prefHeight="680" prefWidth="1100" styleClass="app" stylesheets="@styles_kh.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.CustomerController">
+
+    <!-- TOP BAR -->
+    <top>
+        <HBox spacing="12" style="-fx-padding: 12 16;" styleClass="topbar" BorderPane.alignment="CENTER_LEFT">
+            <children>
+                <Label styleClass="brand" text="🎬 Rạp Xem Hay" />
+                <Pane HBox.hgrow="ALWAYS" />
+                <TextField fx:id="txtSearch" prefWidth="260" promptText="Tìm phim, thể loại..." styleClass="search-field" />
+                <DatePicker fx:id="dpNgayChieu" />
+                <ComboBox fx:id="cbRap" />
+                <ComboBox fx:id="cbDinhDang" />
+                <Button onAction="#onRefresh" text="Làm mới" />
+            </children>
+        </HBox>
+    </top>
+
+    <!-- CENTER: danh sách phim -->
+    <center>
+        <ScrollPane fitToWidth="true" BorderPane.alignment="CENTER">
+            <content>
+                <TilePane fx:id="tilePhim" hgap="16" prefColumns="4" style="-fx-padding: 16;" vgap="16">
+                    <!-- Thêm card bằng code -->
+                </TilePane>
+            </content>
+        </ScrollPane>
+    </center>
+
+    <!-- RIGHT: giỏ vé -->
+    <right>
+        <VBox spacing="10" style="-fx-padding: 12; -fx-min-width: 320;" styleClass="card">
+            <children>
+                <Label styleClass="card-title" text="🧾 Giỏ vé" />
+                <ListView fx:id="lvGioVe" prefHeight="420" />
+                <HBox spacing="8">
+                    <children>
+                        <Label styleClass="muted" text="Tổng:" />
+                        <Label fx:id="lblTong" styleClass="price" text="0 đ" />
+                    </children>
+                </HBox>
+                <Button onAction="#onCheckout" text="Tiếp tục đặt vé" />
+            </children>
+        </VBox>
+    </right>
+
+    <!-- FOOTER -->
+    <bottom>
+        <HBox styleClass="footer">
+            <children>
+                <Label text="© 2025 Rạp Xem Hay · Hotline 1900 1234" />
+            </children>
+        </HBox>
+    </bottom>
+
+</BorderPane>

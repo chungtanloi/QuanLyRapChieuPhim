@@ -1,55 +1,228 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.image.Image?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.Node?>
+<?import javafx.scene.control.cell.*?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.MenuButton?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.Tab?>
 <?import javafx.scene.layout.TilePane?>
-<?import javafx.scene.layout.VBox?>
 
-<BorderPane prefHeight="700" prefWidth="1100" style="-fx-background-color: linear-gradient(to bottom right, #001F3F, #003566);" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.NhanVienController">
+<BorderPane fx:id="root" prefWidth="1200" prefHeight="800"
+            stylesheets="@styles_nv.css"
+            xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controllers.NhanVienController">
 
-    <!-- 🔹 Thanh tiêu đề -->
+    <!-- ======= Thanh tiêu đề / công cụ nhanh ======= -->
     <top>
-        <HBox alignment="CENTER_LEFT" spacing="16" style="-fx-background-color: #003566;">
+        <HBox spacing="12" styleClass="appbar">
+            <children>
+                <Label text="🎬 Quản trị bán vé" styleClass="appbar-title"/>
+
+                <!-- Tìm kiếm nhanh phim/suất/khách hàng -->
+                <TextField fx:id="txtSearch" promptText="Tìm phim / suất chiếu / khách hàng…" HBox.hgrow="ALWAYS"/>
+
+                <DatePicker fx:id="dpNgay" promptText="Hôm nay"/>
+                <ComboBox fx:id="cbRap" promptText="Rạp" prefWidth="140"/>
+                <ComboBox fx:id="cbPhong" promptText="Phòng" prefWidth="140"/>
+
+                <Separator orientation="VERTICAL"/>
+
+                <Button fx:id="btnBanVe" text="Bán vé (F1)" styleClass="btn-primary"/>
+                <Button fx:id="btnDoiVe" text="Đổi vé (F2)"/>
+                <Button fx:id="btnTraVe" text="Trả vé (F3)"/>
+
+                <Pane HBox.hgrow="ALWAYS"/>
+
+                <!-- Tài khoản nhân viên -->
+                <MenuButton fx:id="mbUser" text="NV: ..." styleClass="user-chip">
+                    <items>
+                        <MenuItem text="Thông tin cá nhân" fx:id="miProfile"/>
+                        <MenuItem text="Đổi mật khẩu" fx:id="miChangePwd"/>
+                        <SeparatorMenuItem />
+                        <MenuItem text="Đăng xuất" fx:id="miLogout"/>
+                    </items>
+                </MenuButton>
+            </children>
             <padding>
-                <Insets bottom="12" left="24" right="24" top="12" />
+                <Insets top="10" right="12" bottom="10" left="12"/>
             </padding>
-
-            <ImageView fitHeight="42" fitWidth="42" preserveRatio="true">
-                <image>
-                    <Image url="@../Application/image/user.png" />
-                </image>
-            </ImageView>
-
-            <Label fx:id="lblWelcome" style="-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;" text="Xin chào, Nhân viên!" />
-
-            <Region HBox.hgrow="ALWAYS" />
-            <Button onAction="#handleDangXuat" style="-fx-background-color: #d90429; -fx-text-fill: white; -fx-font-weight: bold;" text="🚪 Đăng xuất" />
         </HBox>
     </top>
 
-    <!-- 🔹 Nội dung chính -->
+    <!-- ======= Thanh điều hướng trái ======= -->
+    <left>
+        <VBox spacing="8" styleClass="sidebar">
+            <children>
+                <Label text="Tính năng" styleClass="sidebar-title"/>
+                <ToggleButton fx:id="navBanVe" text="Bán vé" selected="true" toggleGroup="$nav"/>
+                <ToggleButton fx:id="navSuatChieu" text="Suất chiếu" toggleGroup="$nav"/>
+                <ToggleButton fx:id="navPhim" text="Phim" toggleGroup="$nav"/>
+                <ToggleButton fx:id="navKhachHang" text="Khách hàng" toggleGroup="$nav"/>
+                <ToggleButton fx:id="navHoaDon" text="Hóa đơn" toggleGroup="$nav"/>
+                <Separator/>
+                <ToggleButton fx:id="navCombo" text="Bắp – Nước" toggleGroup="$nav"/>
+                <ToggleButton fx:id="navKhuyenMai" text="Khuyến mãi" toggleGroup="$nav"/>
+            </children>
+            <padding>
+                <Insets top="12" right="8" bottom="12" left="8"/>
+            </padding>
+        </VBox>
+    </left>
+
+    <!-- ======= Khu vực nội dung trung tâm ======= -->
     <center>
-        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;">
-            <VBox alignment="TOP_CENTER" spacing="20">
-                <padding>
-                    <Insets bottom="24" left="24" right="24" top="24" />
-                </padding>
+        <TabPane fx:id="mainTabs" tabClosingPolicy="UNAVAILABLE">
+            <!-- Tab 1: Suất chiếu hôm nay (ưu tiên cho NV quầy vé) -->
+            <tabs>
+                <Tab text="Suất chiếu hôm nay">
+                    <content>
+                        <VBox spacing="12" styleClass="content-area">
+                            <children>
+                                <!-- Bộ lọc nhanh -->
+                                <HBox spacing="8">
+                                    <children>
+                                        <ComboBox fx:id="cbTheLoai" promptText="Thể loại" prefWidth="160"/>
+                                        <ComboBox fx:id="cbDinhDang" promptText="Định dạng (2D/3D/IMAX)" prefWidth="190"/>
+                                        <CheckBox fx:id="ckcConVe" text="Còn vé"/>
+                                        <CheckBox fx:id="ckcSapChieu" text="Sắp chiếu"/>
+                                        <Pane HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="btnRefresh" text="Làm mới"/>
+                                    </children>
+                                </HBox>
 
-                <!-- Tiêu đề -->
-                <Label style="-fx-text-fill: white; -fx-font-size: 22; -fx-font-weight: bold;" text="🎞️ Danh sách phim đang chiếu" />
+                                <!-- Bảng suất chiếu -->
+                                <TableView fx:id="tblSuatChieu" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="colPoster" text="Poster" prefWidth="90"/>
+                                        <TableColumn fx:id="colTenPhim" text="Phim" prefWidth="260"/>
+                                        <TableColumn fx:id="colPhong" text="Phòng" prefWidth="90"/>
+                                        <TableColumn fx:id="colGio" text="Giờ" prefWidth="100"/>
+                                        <TableColumn fx:id="colGia" text="Giá (₫)" prefWidth="110"/>
+                                        <TableColumn fx:id="colTrangThai" text="Trạng thái" prefWidth="120"/>
+                                        <TableColumn fx:id="colHanhDong" text="Hành động" prefWidth="200"/>
+                                    </columns>
+                                </TableView>
 
-                <!-- Grid phim -->
-                <TilePane fx:id="tilePhimDangChieu" alignment="CENTER" hgap="20" prefColumns="3" style="-fx-padding: 10;" vgap="20">
-                </TilePane>
+                                <!-- Phân trang + tổng quan -->
+                                <HBox spacing="10" alignment="CENTER_RIGHT">
+                                    <children>
+                                        <Label fx:id="lblTongSuat" text="0 suất"/>
+                                        <Pagination fx:id="paginationSuatChieu" maxPageIndicatorCount="7"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                            <padding>
+                                <Insets top="12" right="12" bottom="12" left="12"/>
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
 
-            </VBox>
-        </ScrollPane>
+                <!-- Tab 2: Phim đang chiếu (dạng poster card) -->
+                <Tab text="Phim đang chiếu">
+                    <content>
+                        <ScrollPane fitToWidth="true">
+                            <content>
+                                <VBox spacing="12" styleClass="content-area">
+                                    <children>
+                                        <Label text="🎞️ Danh sách phim" styleClass="section-title"/>
+                                        <TilePane fx:id="tilePhimDangChieu" hgap="16" vgap="16" prefColumns="5"/>
+                                    </children>
+                                    <padding>
+                                        <Insets top="12" right="12" bottom="24" left="12"/>
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+                    </content>
+                </Tab>
+
+                <!-- Tab 3: Khách hàng (tối giản cho NV) -->
+                <Tab text="Khách hàng">
+                    <content>
+                        <VBox spacing="10" styleClass="content-area">
+                            <children>
+                                <HBox spacing="8">
+                                    <children>
+                                        <TextField fx:id="txtSearchKH" promptText="Tìm khách hàng theo tên / SĐT…" HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="btnThemKH" text="Thêm KH"/>
+                                    </children>
+                                </HBox>
+                                <TableView fx:id="tblKhachHang" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="colMaKH" text="Mã" prefWidth="80"/>
+                                        <TableColumn fx:id="colTenKH" text="Tên khách" prefWidth="220"/>
+                                        <TableColumn fx:id="colSdt" text="SĐT" prefWidth="150"/>
+                                        <TableColumn fx:id="colHangTV" text="Hạng TV" prefWidth="110"/>
+                                        <TableColumn fx:id="colDiem" text="Điểm" prefWidth="90"/>
+                                        <TableColumn fx:id="colKhAction" text="Hành động" prefWidth="160"/>
+                                    </columns>
+                                </TableView>
+                            </children>
+                            <padding>
+                                <Insets top="12" right="12" bottom="12" left="12"/>
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+
+                <!-- Tab 4: Hóa đơn (tra cứu nhanh) -->
+                <Tab text="Hóa đơn">
+                    <content>
+                        <VBox spacing="10" styleClass="content-area">
+                            <children>
+                                <HBox spacing="8">
+                                    <children>
+                                        <DatePicker fx:id="dpFrom" promptText="Từ ngày"/>
+                                        <DatePicker fx:id="dpTo" promptText="Đến ngày"/>
+                                        <TextField fx:id="txtMaHD" promptText="Mã hóa đơn"/>
+                                        <Pane HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="btnTraCuuHD" text="Tra cứu"/>
+                                    </children>
+                                </HBox>
+                                <TableView fx:id="tblHoaDon" VBox.vgrow="ALWAYS">
+                                    <columns>
+                                        <TableColumn fx:id="colMaHD" text="Mã" prefWidth="100"/>
+                                        <TableColumn fx:id="colNgay" text="Ngày" prefWidth="160"/>
+                                        <TableColumn fx:id="colNhanVien" text="Nhân viên" prefWidth="160"/>
+                                        <TableColumn fx:id="colKhach" text="Khách" prefWidth="200"/>
+                                        <TableColumn fx:id="colTongTien" text="Tổng tiền (₫)" prefWidth="140"/>
+                                        <TableColumn fx:id="colHdAction" text="Hành động" prefWidth="160"/>
+                                    </columns>
+                                </TableView>
+                            </children>
+                            <padding>
+                                <Insets top="12" right="12" bottom="12" left="12"/>
+                            </padding>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
     </center>
+
+    <!-- ======= Thanh trạng thái dưới cùng ======= -->
+    <bottom>
+        <HBox spacing="18" styleClass="statusbar">
+            <children>
+                <Label fx:id="lblWelcome" text="Xin chào, …"/>
+                <Separator orientation="VERTICAL"/>
+                <Label text="Phím tắt: F1 Bán vé · F2 Đổi vé · F3 Trả vé · Ctrl+F Tìm kiếm"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+                <Label fx:id="lblClock" text="--:--"/>
+            </children>
+            <padding>
+                <Insets top="6" right="12" bottom="6" left="12"/>
+            </padding>
+        </HBox>
+    </bottom>
 </BorderPane>

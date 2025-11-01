@@ -70,7 +70,7 @@ public class LoginController {
             NhanVienController nvController = loader.getController();
             nvController.setTenNhanVien(name);
         } else {
-            loader = new FXMLLoader(getClass().getResource("/models/home.fxml"));
+            loader = new FXMLLoader(getClass().getResource("/models/customer_UI.fxml"));
             view = loader.load();
         }
 

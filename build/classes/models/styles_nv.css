@@ -1,0 +1,77 @@
+.root {
+    -fx-font-family: "Inter", "Segoe UI", system-ui;
+    -fx-font-size: 14px;
+}
+.appbar {
+    -fx-background-color: linear-gradient(to right, #1f2937, #0f172a);
+    -fx-padding: 8 12;
+}
+.appbar-title {
+    -fx-text-fill: white;
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+}
+.appbar .text-field {
+    -fx-background-radius: 8;
+    -fx-padding: 8 12;
+}
+.btn-primary {
+    -fx-background-color: #22c55e;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.user-chip {
+    -fx-background-color: rgba(255,255,255,0.08);
+    -fx-text-fill: white;
+}
+
+.sidebar {
+    -fx-background-color: #0b1220;
+    -fx-padding: 12;
+}
+.sidebar-title {
+    -fx-text-fill: #a7b0c0;
+    -fx-font-size: 12px;
+    -fx-text-transform: uppercase;
+}
+.sidebar .toggle-button {
+    -fx-text-fill: #e5e7eb;
+    -fx-background-color: transparent;
+    -fx-alignment: CENTER_LEFT;
+    -fx-padding: 8 10;
+    -fx-background-radius: 8;
+}
+.sidebar .toggle-button:selected {
+    -fx-background-color: rgba(255,255,255,0.08);
+}
+
+.content-area {
+    -fx-background-color: #0f172a;
+}
+.section-title {
+    -fx-text-fill: #e5e7eb;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.table-view {
+    -fx-background-color: #0f172a;
+}
+.table-view .column-header-background {
+    -fx-background-color: #111827;
+}
+.table-view .column-header, .table-view .filler {
+    -fx-size: 38px;
+}
+.table-view .column-header .label {
+    -fx-text-fill: #d1d5db;
+    -fx-font-weight: bold;
+}
+.table-row-cell:filled:selected {
+    -fx-background-color: #1d4ed8;
+}
+
+.statusbar {
+    -fx-background-color: #111827;
+    -fx-text-fill: #9ca3af;
+}
