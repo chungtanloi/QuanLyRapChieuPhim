@@ -1297,18 +1297,75 @@ WHERE c.ten_combo='Combo 2 - 2 Nuoc + Bap' AND sp.ten_san_pham IN ('Bap rang 60o
 SET FOREIGN_KEY_CHECKS=1;
 
 -- 🎬 Cập nhật poster_url cho từng phim
-UPDATE phim SET poster_url = 'https://vn.images.search.yahoo.com/images/view;_ylt=Awr1QNIB0QVpzlgTAb1tUwx.;_ylu=c2VjA3NyBHNsawNpbWcEb2lkAzU3OTMwOWJhZjlkNDFlNGEyMGUyZGI0Y2U0NjU0NmM2BGdwb3MDMgRpdANiaW5n?back=https%3A%2F%2Fvn.images.search.yahoo.com%2Fsearch%2Fimages%3Fp%3Dposter%2Bphim%2Bcu%2Bvang%2Bcua%2Bngoai%26type%3DE210VN885G0-E210VN885G0%26fr%3Dmcafee%26fr2%3Dpiv-web%26tab%3Dorganic%26ri%3D2&w=500&h=750&imgurl=metiz.vn%2Fmedia%2Fposter_film%2Fcuc-vang-cua-ngoai.jpg&rurl=https%3A%2F%2Fmetiz.vn%2F&size=435KB&p=poster+phim+cu+vang+cua+ngoai&oid=579309baf9d41e4a20e2db4ce46546c6&fr2=piv-web&fr=mcafee&tt=Metiz+Cinema&b=0&ni=21&no=2&ts=&tab=organic&sigr=JyKLqEqgbHXv&sigb=j9U1XHtWfYmX&sigi=bFKzxKScDbS3&sigt=1zEpgf82mCqB&.crumb=DCDVWauIfN1&fr=mcafee&fr2=piv-web&type=E210VN885G0-E210VN885G0'
+UPDATE phim SET poster_url = 'https://metiz.vn/media/poster_film/cuc-vang-cua-ngoai.jpg'
 WHERE ten_phim = 'Cuc Vang Cua Ngoai';
 
-UPDATE phim SET poster_url = 'https://vn.images.search.yahoo.com/images/view;_ylt=Awr1QNKb0QVpLZ8T2FhtUwx.;_ylu=c2VjA3NyBHNsawNpbWcEb2lkAzU1MDE1NDMyOWYwZmI2YTFmZjI1M2VhZjQ0Zjc2MDg3BGdwb3MDNQRpdANiaW5n?back=https%3A%2F%2Fvn.images.search.yahoo.com%2Fsearch%2Fimages%3Fp%3Dposter%2Bphim%2Bnha%2Bma%2Bxo%26ei%3DUTF-8%26type%3DE210VN885G0-E210VN885G0%26fr%3Dmcafee%26fr2%3Dp%253As%252Cv%253Ai%252Cm%253Asb-top%26tab%3Dorganic%26ri%3D5&w=1150&h=1440&imgurl=lookaside.fbsbx.com%2Flookaside%2Fcrawler%2Fmedia%2F%3Fmedia_id%3D1111447081169562&rurl=https%3A%2F%2Fwww.facebook.com%2Fmegagsdistribution.vn%2F&size=172KB&p=poster+phim+nha+ma+xo&oid=550154329f0fb6a1ff253eaf44f76087&fr2=p%3As%2Cv%3Ai%2Cm%3Asb-top&fr=mcafee&tt=Mega+GS+Movies&b=0&ni=160&no=5&ts=&tab=organic&sigr=VvOQnHf8jv7C&sigb=4NBKrLaKMg2x&sigi=oz5dkWfrziH8&sigt=XzXiVhjNi704&.crumb=DCDVWauIfN1&fr=mcafee&fr2=p%3As%2Cv%3Ai%2Cm%3Asb-top&type=E210VN885G0-E210VN885G0'
+UPDATE phim SET poster_url = 'https://scontent.fvca1-3.fna.fbcdn.net/v/t39.30808-6/555674947_1111436614503942_5215464436592486745_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_ohc=C5y_HUqVSRgQ7kNvwHLBnXy&_nc_oc=AdkTbduFYiPbGq3lOyfFLe0TSOV0xUcq9kcyoz-eG-51pP_vkpjZvVRLno0IZkdUlNo&_nc_zt=23&_nc_ht=scontent.fvca1-3.fna&_nc_gid=Jp0qNvw_3fKnUJH7hFkOxg&oh=00_AfeOUbpSgGiT_wI1hyxRMCYivWm1DRTN9nYuD-kJK-y4eQ&oe=690BB4B7'
 WHERE ten_phim = 'Nha Ma Xo';
 
-UPDATE phim SET poster_url = 'https://vn.images.search.yahoo.com/images/view;_ylt=AwrPplDt0QVpVEQaF4RtUwx.;_ylu=c2VjA3NyBHNsawNpbWcEb2lkA2Y3NTM4NGQxZDFmNmYwODdkZjFlYzc2YjRiNTU1MThiBGdwb3MDMQRpdANiaW5n?back=https%3A%2F%2Fvn.images.search.yahoo.com%2Fsearch%2Fimages%3Fp%3Dposter%2Bphim%2Bquy%2Ban%2Btang%2B3%26type%3DE210VN885G0-E210VN885G0-E210VN885G0-E210VN885G0%26fr%3Dmcafee%26fr2%3Dpiv-web%26tab%3Dorganic%26ri%3D1&w=1280&h=1117&imgurl=daknong.1cdn.vn%2F2024%2F10%2F16%2Fimages2.thanhnien.vn-528068263637045248-2024-10-13-_h2-17288413805091450266602.jpeg&rurl=https%3A%2F%2Fbaolamdong.vn%2Freview-phim-tee-yod-quy-an-tang-2-tiep-noi-sieu-pham-phan-1-231796.html&size=134KB&p=poster+phim+quy+an+tang+3&oid=f75384d1d1f6f087df1ec76b4b55518b&fr2=piv-web&fr=mcafee&tt=Review+phim+Tee+Yod+Qu%E1%BB%B7+%C4%82n+T%E1%BA%A1ng+2%3A+Ti%E1%BA%BFp+n%E1%BB%91i+si%C3%AAu+ph%E1%BA%A9m+ph%E1%BA%A7n+1&b=0&ni=21&no=1&ts=&tab=organic&sigr=UQTHEe3OLyn9&sigb=egQyKVv_.awr&sigi=bRHrfYXmNiP0&sigt=rDRL_WbkicQo&.crumb=DCDVWauIfN1&fr=mcafee&fr2=piv-web&type=E210VN885G0-E210VN885G0-E210VN885G0-E210VN885G0'
+UPDATE phim SET poster_url = 'https://i.ytimg.com/vi/9jyPXIf4wVk/maxresdefault.jpg'
 WHERE ten_phim = 'TEE YOD 3: Quy An Tang';
 
-UPDATE phim SET poster_url = 'https://vn.images.search.yahoo.com/images/view;_ylt=AwrPplAZ0gVpefUaZDxtUwx.;_ylu=c2VjA3NyBHNsawNpbWcEb2lkA2Q3NDJjMDE4NzBmYWM5NjVmOWY5ODc1MDU0MDM3MGMxBGdwb3MDMgRpdANiaW5n?back=https%3A%2F%2Fvn.images.search.yahoo.com%2Fsearch%2Fimages%3Fp%3Dposter%2Bphim%2Btu%2Bchien%2Btren%2Bkhong%26ei%3DUTF-8%26type%3DE210VN885G0-E210VN885G0-E210VN885G0-E210VN885G0%26fr%3Dmcafee%26fr2%3Dp%253As%252Cv%253Ai%252Cm%253Asb-top%26tab%3Dorganic%26ri%3D2&w=500&h=624&imgurl=st.download.com.vn%2Fdata%2Fimage%2F2025%2F09%2F15%2Ftu-chien-tren-khong-1.jpg&rurl=https%3A%2F%2Fdownload.com.vn%2Ftu-chien-tren-khong-197082&size=65KB&p=poster+phim+tu+chien+tren+khong&oid=d742c01870fac965f9f98750540370c1&fr2=p%3As%2Cv%3Ai%2Cm%3Asb-top&fr=mcafee&tt=T%E1%BB%AD+chi%E1%BA%BFn+tr%C3%AAn+kh%C3%B4ng+-+Phim+h%C3%A0nh+%C4%91%E1%BB%99ng+%C4%91i%E1%BB%87n+%E1%BA%A3nh+Vi%E1%BB%87t+Nam+%C4%91%E1%BB%81+t%C3%A0i+kh%C3%B4ng+t%E1%BA%B7c&b=0&ni=160&no=2&ts=&tab=organic&sigr=c9jQ7lCglhiU&sigb=L5wcVIOHnFKy&sigi=Ss6IuGvzsUGR&sigt=aSzomJ0GcDca&.crumb=DCDVWauIfN1&fr=mcafee&fr2=p%3As%2Cv%3Ai%2Cm%3Asb-top&type=E210VN885G0-E210VN885G0-E210VN885G0-E210VN885G0'
+UPDATE phim SET poster_url = 'https://st.download.com.vn/data/image/2025/09/15/tu-chien-tren-khong-1.jpg'
 WHERE ten_phim = 'Tu Chien Tren Khong';
 
-UPDATE phim SET poster_url = 'https://upload.wikimedia.org/wikipedia/vi/8/84/Mua_Do_poster.jpg'
+UPDATE phim SET poster_url = 'https://i.vgt.vn/2025/9/9/chi-tiet-trong-nguyen-tac-mua-do-bi-thay-doi-khi-len-phim-khan-gia-tiec-nuoi-982-7528970.webp'
 WHERE ten_phim = 'Mua Do';
+
+ALTER TABLE phim MODIFY COLUMN poster_url VARCHAR(1000);
+
+USE qlrapchieuphim;
+SET NAMES utf8mb4;
+
+-- 1) Bảo đảm có định dạng/phòng/phim
+INSERT INTO dinh_dang (ten_dinh_dang) VALUES ('2D')
+ON DUPLICATE KEY UPDATE ten_dinh_dang=VALUES(ten_dinh_dang);
+
+INSERT INTO phong (ten_phong, suc_chua, trang_thai)
+VALUES ('Phòng 1', 60, 'HOAT_DONG')
+ON DUPLICATE KEY UPDATE suc_chua=VALUES(suc_chua), trang_thai=VALUES(trang_thai);
+
+INSERT INTO loai_ghe (ten_loai_ghe, he_so_gia)
+VALUES ('STANDARD',1.00),('VIP',1.30)
+ON DUPLICATE KEY UPDATE he_so_gia=VALUES(he_so_gia);
+
+SET @id_phong := (SELECT ma_phong FROM phong WHERE ten_phong='Phòng 1' LIMIT 1);
+SET @id_dd    := (SELECT ma_dinh_dang FROM dinh_dang WHERE ten_dinh_dang='2D' LIMIT 1);
+
+-- Ghế A/B (STANDARD), C (VIP) nếu chưa có
+INSERT INTO ghe (ma_phong, hang_ghe, so_ghe, ma_loai_ghe)
+SELECT @id_phong,'A',n, (SELECT ma_loai_ghe FROM loai_ghe WHERE ten_loai_ghe='STANDARD')
+FROM (SELECT 1 n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
+      UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) x
+ON DUPLICATE KEY UPDATE ma_phong=ma_phong;
+
+INSERT INTO ghe (ma_phong, hang_ghe, so_ghe, ma_loai_ghe)
+SELECT @id_phong,'B',n, (SELECT ma_loai_ghe FROM loai_ghe WHERE ten_loai_ghe='STANDARD') FROM x
+ON DUPLICATE KEY UPDATE ma_phong=ma_phong;
+
+INSERT INTO ghe (ma_phong, hang_ghe, so_ghe, ma_loai_ghe)
+SELECT @id_phong,'C',n, (SELECT ma_loai_ghe FROM loai_ghe WHERE ten_loai_ghe='VIP') FROM x
+ON DUPLICATE KEY UPDATE ma_phong=ma_phong;
+
+INSERT INTO phim (ten_phim, thoi_luong_phut)
+VALUES ('Inside Out 2',96)
+ON DUPLICATE KEY UPDATE thoi_luong_phut=VALUES(thoi_luong_phut);
+
+SET @id_phim := (SELECT ma_phim FROM phim WHERE ten_phim='Inside Out 2' LIMIT 1);
+
+-- 2) Tạo 2 suất chiếu HÔM NAY
+INSERT INTO suat_chieu (ma_phim, ma_phong, ma_dinh_dang, bat_dau_luc, gia_co_ban, trang_thai)
+VALUES 
+(@id_phim, @id_phong, @id_dd, CONCAT(CURDATE(),' 13:30:00'), 70000,'MO_BAN'),
+(@id_phim, @id_phong, @id_dd, CONCAT(CURDATE(),' 19:00:00'), 70000,'MO_BAN')
+ON DUPLICATE KEY UPDATE gia_co_ban=VALUES(gia_co_ban), trang_thai=VALUES(trang_thai);
+
+-- 3) Sinh vé (nếu chưa có trigger tự sinh)
+INSERT INTO ve (ma_suat_chieu, ma_ghe, gia_ban, trang_thai)
+SELECT sc.ma_suat_chieu, g.ma_ghe, ROUND(sc.gia_co_ban * lg.he_so_gia,0), 'SAN_SANG'
+FROM suat_chieu sc
+JOIN ghe g  ON g.ma_phong = sc.ma_phong
+JOIN loai_ghe lg ON lg.ma_loai_ghe = g.ma_loai_ghe
+LEFT JOIN ve v ON v.ma_suat_chieu = sc.ma_suat_chieu AND v.ma_ghe = g.ma_ghe
+WHERE DATE(sc.bat_dau_luc) = CURDATE() AND v.ma_ve IS NULL;
 

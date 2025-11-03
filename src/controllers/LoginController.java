@@ -34,7 +34,7 @@ public class LoginController {
             String sql = "SELECT vai_tro, ho_ten FROM tai_khoan WHERE email = ? AND mat_khau_ma = ?";
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, email);
-            ps.setString(2, password); // nếu có mã hoá, bạn thay hàm mã hoá tại đây
+            ps.setString(2, password); 
 
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
