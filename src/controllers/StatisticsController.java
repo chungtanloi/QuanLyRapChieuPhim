@@ -56,7 +56,7 @@ public class StatisticsController {
         statisticTypeComboBox.setItems(FXCollections.observableArrayList(
             "Tất cả",
             "Theo phim",
-            "Theo rạp chiếu",
+            "Theo phòng chiếu",
             "Theo khách hàng",
             "Theo sản phẩm"
         ));
@@ -85,7 +85,6 @@ public class StatisticsController {
 
     @FXML
     private void handleExport() {
-        // Xuất báo cáo ra file Excel hoặc PDF
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Xuất báo cáo");
         alert.setHeaderText("Chức năng đang phát triển");
@@ -116,9 +115,14 @@ public class StatisticsController {
 
     private void loadSummaryCards(LocalDate fromDate, LocalDate toDate) {
         try (Connection conn = DBConnection.getConnection()) {
-            // Tổng doanh thu
-            String revenueQuery = "SELECT COALESCE(SUM(TongTien), 0) as total FROM VePhim " +
-                    "WHERE NgayDat BETWEEN ? AND ?";
+            if (conn == null) {
+                showAlert("Không thể kết nối database!");
+                return;
+            }
+
+            // 1. Tổng doanh thu (từ đơn hàng đã thanh toán)
+            String revenueQuery = "SELECT COALESCE(SUM(tong_tien), 0) as total FROM don_hang " +
+                    "WHERE trang_thai = 'DA_THANH_TOAN' AND DATE(dat_luc) BETWEEN ? AND ?";
             try (PreparedStatement ps = conn.prepareStatement(revenueQuery)) {
                 ps.setDate(1, Date.valueOf(fromDate));
                 ps.setDate(2, Date.valueOf(toDate));
@@ -126,12 +130,18 @@ public class StatisticsController {
                 if (rs.next()) {
                     double revenue = rs.getDouble("total");
                     totalRevenueLabel.setText(currencyFormat.format(revenue) + " VNĐ");
+                    
+                    // Tính % thay đổi so với kỳ trước
+                    double previousRevenue = getPreviousPeriodRevenue(conn, fromDate, toDate);
+                    updateChangeLabel(revenueChangeLabel, revenue, previousRevenue);
                 }
             }
 
-            // Tổng vé bán
-            String ticketsQuery = "SELECT COUNT(*) as total FROM VePhim " +
-                    "WHERE NgayDat BETWEEN ? AND ?";
+            // 2. Tổng vé đã bán
+            String ticketsQuery = "SELECT COUNT(DISTINCT dv.ma_ve) as total " +
+                    "FROM don_ve dv " +
+                    "JOIN don_hang dh ON dv.ma_don_hang = dh.ma_don_hang " +
+                    "WHERE dh.trang_thai = 'DA_THANH_TOAN' AND DATE(dh.dat_luc) BETWEEN ? AND ?";
             try (PreparedStatement ps = conn.prepareStatement(ticketsQuery)) {
                 ps.setDate(1, Date.valueOf(fromDate));
                 ps.setDate(2, Date.valueOf(toDate));
@@ -139,12 +149,15 @@ public class StatisticsController {
                 if (rs.next()) {
                     int tickets = rs.getInt("total");
                     totalTicketsLabel.setText(tickets + " vé");
+                    
+                    int previousTickets = getPreviousPeriodTickets(conn, fromDate, toDate);
+                    updateChangeLabel(ticketsChangeLabel, tickets, previousTickets);
                 }
             }
 
-            // Khách hàng mới
-            String customersQuery = "SELECT COUNT(*) as total FROM KhachHang " +
-                    "WHERE NgayDangKy BETWEEN ? AND ?";
+            // 3. Khách hàng mới
+            String customersQuery = "SELECT COUNT(*) as total FROM khach_hang " +
+                    "WHERE DATE(tao_luc) BETWEEN ? AND ?";
             try (PreparedStatement ps = conn.prepareStatement(customersQuery)) {
                 ps.setDate(1, Date.valueOf(fromDate));
                 ps.setDate(2, Date.valueOf(toDate));
@@ -152,12 +165,15 @@ public class StatisticsController {
                 if (rs.next()) {
                     int customers = rs.getInt("total");
                     newCustomersLabel.setText(customers + " người");
+                    
+                    int previousCustomers = getPreviousPeriodCustomers(conn, fromDate, toDate);
+                    updateChangeLabel(customersChangeLabel, customers, previousCustomers);
                 }
             }
 
-            // Tổng suất chiếu
-            String screeningsQuery = "SELECT COUNT(*) as total FROM SuatChieu " +
-                    "WHERE NgayChieu BETWEEN ? AND ?";
+            // 4. Tổng suất chiếu
+            String screeningsQuery = "SELECT COUNT(*) as total FROM suat_chieu " +
+                    "WHERE DATE(bat_dau_luc) BETWEEN ? AND ? AND trang_thai != 'HUY'";
             try (PreparedStatement ps = conn.prepareStatement(screeningsQuery)) {
                 ps.setDate(1, Date.valueOf(fromDate));
                 ps.setDate(2, Date.valueOf(toDate));
@@ -165,6 +181,9 @@ public class StatisticsController {
                 if (rs.next()) {
                     int screenings = rs.getInt("total");
                     totalScreeningsLabel.setText(screenings + " suất");
+                    
+                    int previousScreenings = getPreviousPeriodScreenings(conn, fromDate, toDate);
+                    updateChangeLabel(screeningsChangeLabel, screenings, previousScreenings);
                 }
             }
 
@@ -174,14 +193,91 @@ public class StatisticsController {
         }
     }
 
+    private void updateChangeLabel(Label label, double current, double previous) {
+        if (previous == 0) {
+            label.setText("Chưa có dữ liệu kỳ trước");
+            return;
+        }
+        
+        double change = ((current - previous) / previous) * 100;
+        String arrow = change >= 0 ? "↑" : "↓";
+        String color = change >= 0 ? "#4CAF50" : "#f44336";
+        
+        label.setText(String.format("%s %.1f%% so với kỳ trước", arrow, Math.abs(change)));
+        label.setStyle("-fx-text-fill: " + color + "; -fx-font-size: 11;");
+    }
+
+    private double getPreviousPeriodRevenue(Connection conn, LocalDate fromDate, LocalDate toDate) throws SQLException {
+        long daysDiff = toDate.toEpochDay() - fromDate.toEpochDay();
+        LocalDate prevFrom = fromDate.minusDays(daysDiff + 1);
+        LocalDate prevTo = fromDate.minusDays(1);
+        
+        String query = "SELECT COALESCE(SUM(tong_tien), 0) as total FROM don_hang " +
+                "WHERE trang_thai = 'DA_THANH_TOAN' AND DATE(dat_luc) BETWEEN ? AND ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, Date.valueOf(prevFrom));
+            ps.setDate(2, Date.valueOf(prevTo));
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getDouble("total") : 0;
+        }
+    }
+
+    private int getPreviousPeriodTickets(Connection conn, LocalDate fromDate, LocalDate toDate) throws SQLException {
+        long daysDiff = toDate.toEpochDay() - fromDate.toEpochDay();
+        LocalDate prevFrom = fromDate.minusDays(daysDiff + 1);
+        LocalDate prevTo = fromDate.minusDays(1);
+        
+        String query = "SELECT COUNT(DISTINCT dv.ma_ve) as total " +
+                "FROM don_ve dv JOIN don_hang dh ON dv.ma_don_hang = dh.ma_don_hang " +
+                "WHERE dh.trang_thai = 'DA_THANH_TOAN' AND DATE(dh.dat_luc) BETWEEN ? AND ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, Date.valueOf(prevFrom));
+            ps.setDate(2, Date.valueOf(prevTo));
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt("total") : 0;
+        }
+    }
+
+    private int getPreviousPeriodCustomers(Connection conn, LocalDate fromDate, LocalDate toDate) throws SQLException {
+        long daysDiff = toDate.toEpochDay() - fromDate.toEpochDay();
+        LocalDate prevFrom = fromDate.minusDays(daysDiff + 1);
+        LocalDate prevTo = fromDate.minusDays(1);
+        
+        String query = "SELECT COUNT(*) as total FROM khach_hang WHERE DATE(tao_luc) BETWEEN ? AND ?";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, Date.valueOf(prevFrom));
+            ps.setDate(2, Date.valueOf(prevTo));
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt("total") : 0;
+        }
+    }
+
+    private int getPreviousPeriodScreenings(Connection conn, LocalDate fromDate, LocalDate toDate) throws SQLException {
+        long daysDiff = toDate.toEpochDay() - fromDate.toEpochDay();
+        LocalDate prevFrom = fromDate.minusDays(daysDiff + 1);
+        LocalDate prevTo = fromDate.minusDays(1);
+        
+        String query = "SELECT COUNT(*) as total FROM suat_chieu " +
+                "WHERE DATE(bat_dau_luc) BETWEEN ? AND ? AND trang_thai != 'HUY'";
+        try (PreparedStatement ps = conn.prepareStatement(query)) {
+            ps.setDate(1, Date.valueOf(prevFrom));
+            ps.setDate(2, Date.valueOf(prevTo));
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt("total") : 0;
+        }
+    }
+
     private void loadRevenueChart(LocalDate fromDate, LocalDate toDate) {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Doanh thu");
 
         try (Connection conn = DBConnection.getConnection()) {
-            String query = "SELECT DATE(NgayDat) as date, SUM(TongTien) as revenue " +
-                    "FROM VePhim WHERE NgayDat BETWEEN ? AND ? " +
-                    "GROUP BY DATE(NgayDat) ORDER BY date";
+            if (conn == null) return;
+            
+            String query = "SELECT DATE(dat_luc) as date, SUM(tong_tien) as revenue " +
+                    "FROM don_hang WHERE trang_thai = 'DA_THANH_TOAN' " +
+                    "AND DATE(dat_luc) BETWEEN ? AND ? " +
+                    "GROUP BY DATE(dat_luc) ORDER BY date";
             
             try (PreparedStatement ps = conn.prepareStatement(query)) {
                 ps.setDate(1, Date.valueOf(fromDate));
@@ -207,29 +303,47 @@ public class StatisticsController {
         ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
 
         try (Connection conn = DBConnection.getConnection()) {
-            String query = "SELECT 'Vé phim' as category, COALESCE(SUM(TongTien), 0) as revenue " +
-                    "FROM VePhim WHERE NgayDat BETWEEN ? AND ? " +
-                    "UNION ALL " +
-                    "SELECT 'Sản phẩm', COALESCE(SUM(ThanhTien), 0) " +
-                    "FROM ChiTietDonHang cdh " +
-                    "JOIN DonHang dh ON cdh.MaDonHang = dh.MaDonHang " +
-                    "WHERE dh.NgayDat BETWEEN ? AND ?";
-
-            try (PreparedStatement ps = conn.prepareStatement(query)) {
+            if (conn == null) return;
+            
+            // Doanh thu từ vé
+            String ticketQuery = "SELECT COALESCE(SUM(dv.don_gia), 0) as revenue " +
+                    "FROM don_ve dv " +
+                    "JOIN don_hang dh ON dv.ma_don_hang = dh.ma_don_hang " +
+                    "WHERE dh.trang_thai = 'DA_THANH_TOAN' AND DATE(dh.dat_luc) BETWEEN ? AND ?";
+            
+            double ticketRevenue = 0;
+            try (PreparedStatement ps = conn.prepareStatement(ticketQuery)) {
                 ps.setDate(1, Date.valueOf(fromDate));
                 ps.setDate(2, Date.valueOf(toDate));
-                ps.setDate(3, Date.valueOf(fromDate));
-                ps.setDate(4, Date.valueOf(toDate));
                 ResultSet rs = ps.executeQuery();
-
-                while (rs.next()) {
-                    String category = rs.getString("category");
-                    double revenue = rs.getDouble("revenue");
-                    if (revenue > 0) {
-                        pieData.add(new PieChart.Data(category + ": " + currencyFormat.format(revenue) + " VNĐ", revenue));
-                    }
-                }
+                if (rs.next()) ticketRevenue = rs.getDouble("revenue");
             }
+
+            // Doanh thu từ hàng hóa (sản phẩm + combo)
+            String productQuery = "SELECT COALESCE(SUM(hh.don_gia * hh.so_luong), 0) as revenue " +
+                    "FROM hang_hoa hh " +
+                    "JOIN don_hang dh ON hh.ma_don_hang = dh.ma_don_hang " +
+                    "WHERE dh.trang_thai = 'DA_THANH_TOAN' AND DATE(dh.dat_luc) BETWEEN ? AND ?";
+            
+            double productRevenue = 0;
+            try (PreparedStatement ps = conn.prepareStatement(productQuery)) {
+                ps.setDate(1, Date.valueOf(fromDate));
+                ps.setDate(2, Date.valueOf(toDate));
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) productRevenue = rs.getDouble("revenue");
+            }
+
+            if (ticketRevenue > 0) {
+                pieData.add(new PieChart.Data("Vé phim: " + currencyFormat.format(ticketRevenue) + " VNĐ", ticketRevenue));
+            }
+            if (productRevenue > 0) {
+                pieData.add(new PieChart.Data("Hàng hóa: " + currencyFormat.format(productRevenue) + " VNĐ", productRevenue));
+            }
+            
+            if (pieData.isEmpty()) {
+                pieData.add(new PieChart.Data("Chưa có dữ liệu", 1));
+            }
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -241,12 +355,17 @@ public class StatisticsController {
         XYChart.Series<String, Number> series = new XYChart.Series<>();
 
         try (Connection conn = DBConnection.getConnection()) {
-            String query = "SELECT p.TenPhim, SUM(vp.TongTien) as revenue " +
-                    "FROM VePhim vp " +
-                    "JOIN SuatChieu sc ON vp.MaSuatChieu = sc.MaSuatChieu " +
-                    "JOIN Phim p ON sc.MaPhim = p.MaPhim " +
-                    "WHERE vp.NgayDat BETWEEN ? AND ? " +
-                    "GROUP BY p.MaPhim, p.TenPhim " +
+            if (conn == null) return;
+            
+            String query = "SELECT p.ten_phim, SUM(dv.don_gia) as revenue " +
+                    "FROM don_ve dv " +
+                    "JOIN don_hang dh ON dv.ma_don_hang = dh.ma_don_hang " +
+                    "JOIN ve v ON dv.ma_ve = v.ma_ve " +
+                    "JOIN suat_chieu sc ON v.ma_suat_chieu = sc.ma_suat_chieu " +
+                    "JOIN phim p ON sc.ma_phim = p.ma_phim " +
+                    "WHERE dh.trang_thai = 'DA_THANH_TOAN' " +
+                    "AND DATE(dh.dat_luc) BETWEEN ? AND ? " +
+                    "GROUP BY p.ma_phim, p.ten_phim " +
                     "ORDER BY revenue DESC LIMIT 10";
 
             try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -255,9 +374,8 @@ public class StatisticsController {
                 ResultSet rs = ps.executeQuery();
 
                 while (rs.next()) {
-                    String movieName = rs.getString("TenPhim");
+                    String movieName = rs.getString("ten_phim");
                     double revenue = rs.getDouble("revenue");
-                    // Rút gọn tên phim nếu quá dài
                     String shortName = movieName.length() > 20 ? movieName.substring(0, 17) + "..." : movieName;
                     series.getData().add(new XYChart.Data<>(shortName, revenue));
                 }
@@ -274,17 +392,23 @@ public class StatisticsController {
         ObservableList<StatisticDetail> data = FXCollections.observableArrayList();
 
         try (Connection conn = DBConnection.getConnection()) {
-            String query = "SELECT DATE(vp.NgayDat) as date, p.TenPhim, " +
-                    "COUNT(DISTINCT sc.MaSuatChieu) as screenings, " +
-                    "COUNT(vp.MaVe) as tickets, " +
-                    "SUM(vp.TongTien) as revenue, " +
-                    "ROUND((COUNT(vp.MaVe) * 100.0 / (COUNT(DISTINCT sc.MaSuatChieu) * rc.SoGhe)), 2) as occupancy " +
-                    "FROM VePhim vp " +
-                    "JOIN SuatChieu sc ON vp.MaSuatChieu = sc.MaSuatChieu " +
-                    "JOIN Phim p ON sc.MaPhim = p.MaPhim " +
-                    "JOIN RapChieu rc ON sc.MaRap = rc.MaRap " +
-                    "WHERE vp.NgayDat BETWEEN ? AND ? " +
-                    "GROUP BY DATE(vp.NgayDat), p.MaPhim, p.TenPhim, rc.SoGhe " +
+            if (conn == null) return;
+            
+            String query = "SELECT DATE(dh.dat_luc) as date, p.ten_phim, " +
+                    "COUNT(DISTINCT sc.ma_suat_chieu) as screenings, " +
+                    "COUNT(DISTINCT v.ma_ve) as tickets, " +
+                    "SUM(dv.don_gia) as revenue, " +
+                    "ROUND((COUNT(DISTINCT v.ma_ve) * 100.0 / " +
+                    "(COUNT(DISTINCT sc.ma_suat_chieu) * ph.suc_chua)), 2) as occupancy " +
+                    "FROM don_hang dh " +
+                    "JOIN don_ve dv ON dh.ma_don_hang = dv.ma_don_hang " +
+                    "JOIN ve v ON dv.ma_ve = v.ma_ve " +
+                    "JOIN suat_chieu sc ON v.ma_suat_chieu = sc.ma_suat_chieu " +
+                    "JOIN phim p ON sc.ma_phim = p.ma_phim " +
+                    "JOIN phong ph ON sc.ma_phong = ph.ma_phong " +
+                    "WHERE dh.trang_thai = 'DA_THANH_TOAN' " +
+                    "AND DATE(dh.dat_luc) BETWEEN ? AND ? " +
+                    "GROUP BY DATE(dh.dat_luc), p.ma_phim, p.ten_phim, ph.suc_chua " +
                     "ORDER BY date DESC";
 
             try (PreparedStatement ps = conn.prepareStatement(query)) {
@@ -295,7 +419,7 @@ public class StatisticsController {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 while (rs.next()) {
                     String date = rs.getDate("date").toLocalDate().format(formatter);
-                    String movie = rs.getString("TenPhim");
+                    String movie = rs.getString("ten_phim");
                     int screenings = rs.getInt("screenings");
                     int tickets = rs.getInt("tickets");
                     String revenue = currencyFormat.format(rs.getDouble("revenue"));
