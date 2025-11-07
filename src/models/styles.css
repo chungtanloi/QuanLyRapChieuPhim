@@ -9,7 +9,7 @@
     -fx-card-bg: #ffffff;
 }
 
-/*************  TOPBAR (đỏ như web)  *************/
+/*************  TOPBAR  *************/
 .topbar {
     -fx-background-color: linear-gradient(135deg, -fx-primary 0%, -fx-primary-dark 100%);
     -fx-alignment: CENTER_LEFT;
@@ -41,7 +41,7 @@
 }
 
 
-/*************  SIDEBAR (đỏ điện ảnh như web)  *************/
+/*************  SIDEBAR   *************/
 /* ==== SIDEBAR SÁNG ==== */
 .sidebar {
     -fx-background-color: linear-gradient(135deg, #e63946 0%, #c41e2e 100%);
@@ -101,13 +101,11 @@
     -fx-max-width: 72;
 }
 
-/* Khi gọn: giảm padding của các nav-button để icon canh giữa đẹp hơn */
 .sidebar.collapsed .nav-button {
     -fx-padding: 10 10 10 10;
 }
 
-/* Bạn có thể ẩn chữ bằng code (GRAPHIC_ONLY). Nếu vẫn muốn CSS can thiệp,
-   có thể giảm opacity chữ một chút khi collapsed cho đồng bộ chuyển đổi: */
+
 .sidebar.collapsed .nav-button .text {
     -fx-opacity: 0.0; /* chỉ hiệu ứng thị giác, thực tế ẩn chữ dùng code sẽ chắc hơn */
 }
