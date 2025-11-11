@@ -4,7 +4,9 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
@@ -34,26 +36,25 @@
                   <Font size="48.0" />
                </font>
             </Label>
-            <FlowPane prefHeight="70.0" prefWidth="279.0" />
-            <Button contentDisplay="RIGHT" graphicTextGap="10.0" layoutX="816.0" layoutY="44.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css" />
-            <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
-               <graphic>
+            <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css" />
+            <FlowPane prefHeight="200.0" prefWidth="200.0">
+               <children>
+                  <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" styleClass="button-icon">
+                           <image>
+                              <Image url="@../Application/image/user.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" styleClass="button-icon">
                      <image>
                         <Image url="@../Application/image/bell.png" />
                      </image>
                   </ImageView>
-               </graphic>
-            </Button>
-            <Button fx:id="btnLogout" contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" onAction="#onLogout" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
-               <graphic>
-                  <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" styleClass="button-icon">
-                     <image>
-                        <Image url="@../Application/image/user.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
+               </children>
+            </FlowPane>
          </children>
       </HBox>
    </top>
@@ -190,7 +191,21 @@
       </VBox>
    </left>
    <center>
-  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" />
+    <VBox spacing="10" style="-fx-padding:16;" BorderPane.alignment="CENTER">
+        <HBox spacing="8">
+            <TextField fx:id="txtTimKiem" promptText="Nhập từ khóa (phim, khách hàng, đơn hàng, combo, sản phẩm...)" HBox.hgrow="ALWAYS" />
+            <Button onAction="#timKiemTongHop" text="Tìm kiếm" />
+        </HBox>
+
+        <TableView fx:id="tblKetQua" prefHeight="480.0" prefWidth="800.0">
+            <columns>
+                <TableColumn fx:id="colLoai" prefWidth="140.0" text="Loại" />
+                <TableColumn fx:id="colMa" prefWidth="180.0" text="Mã" />
+                <TableColumn fx:id="colTen" prefWidth="300.0" text="Tên" />
+                <TableColumn fx:id="colThongTin" prefWidth="220.0" text="Thông tin" />
+            </columns>
+        </TableView>
+    </VBox>
 </center>
 
    <bottom>

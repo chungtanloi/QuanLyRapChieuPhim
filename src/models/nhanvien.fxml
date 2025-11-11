@@ -20,11 +20,8 @@
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToggleGroup?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
 
@@ -52,8 +49,6 @@
 
                 <MenuButton fx:id="mbUser" styleClass="user-chip" text="NV: ...">
                     <items>
-                        <MenuItem fx:id="miProfile" text="Thông tin cá nhân" />
-                        <MenuItem fx:id="miChangePwd" text="Đổi mật khẩu" />
                         <SeparatorMenuItem />
                         <MenuItem fx:id="miLogout" text="Đăng xuất" />
                     </items>
@@ -168,8 +163,6 @@
                                         <Button fx:id="btnClearTimKH" text="Xoá" />
                                         <Separator orientation="VERTICAL" />
                                         <Button fx:id="btnThemKH" text="Thêm KH" />
-                                        <Button fx:id="btnSuaKH" text="Sửa" />
-                                        <Button fx:id="btnXoaKH" text="Xóa" />
                                     </children>
                                 </HBox>
 
@@ -183,36 +176,6 @@
                                         <TableColumn fx:id="colDiem" prefWidth="90" text="Điểm" />
                                     </columns>
                                 </TableView>
-
-                                <GridPane hgap="8" vgap="8">
-                                    <columnConstraints>
-                                        <ColumnConstraints percentWidth="12" />
-                                        <ColumnConstraints percentWidth="38" />
-                                        <ColumnConstraints percentWidth="12" />
-                                        <ColumnConstraints percentWidth="38" />
-                                    </columnConstraints>
-                                    <children>
-                                        <Label text="Họ tên" textFill="WHITE" />
-                                        <TextField fx:id="txtHoTenKH" GridPane.columnIndex="1" />
-
-                                        <Label text="SĐT" textFill="WHITE" GridPane.columnIndex="2" />
-                                        <TextField fx:id="txtSdtKH" GridPane.columnIndex="3" />
-
-                                        <Label text="Email" textFill="WHITE" GridPane.rowIndex="1" />
-                                        <TextField fx:id="txtEmailKH" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-
-                                        <Label text="Hạng TV" textFill="WHITE" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                                        <ComboBox fx:id="cbHangTV" GridPane.columnIndex="3" GridPane.rowIndex="1" />
-
-                                        <Label text="Điểm" textFill="WHITE" GridPane.rowIndex="2" />
-                                        <TextField fx:id="txtDiem" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                    </children>
-                                    <rowConstraints>
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                        <RowConstraints />
-                                    </rowConstraints>
-                                </GridPane>
                             </children>
                             <padding>
                                 <Insets bottom="12" left="12" right="12" top="12" />
@@ -228,29 +191,29 @@
                             <children>
                                 <HBox spacing="8">
                                     <children>
-                                        <DatePicker fx:id="dpFrom" promptText="Từ ngày"/>
-                                        <DatePicker fx:id="dpTo" promptText="Đến ngày"/>
-                                        <TextField fx:id="txtMaHD" promptText="Mã hóa đơn"/>
-                                        <Pane HBox.hgrow="ALWAYS"/>
-                                        <Button fx:id="btnTraCuuHD" text="Tra cứu"/>
+                                        <DatePicker fx:id="dpFrom" promptText="Từ ngày" />
+                                        <DatePicker fx:id="dpTo" promptText="Đến ngày" />
+                                        <TextField fx:id="txtMaHD" promptText="Mã hóa đơn" />
+                                        <Pane HBox.hgrow="ALWAYS" />
+                                        <Button fx:id="btnTraCuuHD" text="Tra cứu" />
                                     </children>
                                 </HBox>
 
                                 <!-- Bảng hóa đơn có cột In -->
-                                <TableView fx:id="tblHoaDon" VBox.vgrow="ALWAYS" styleClass="styled-table">
+                                <TableView fx:id="tblHoaDon" styleClass="styled-table" VBox.vgrow="ALWAYS">
                                     <columns>
-                                        <TableColumn fx:id="colMaHD" prefWidth="100" text="Mã"/>
-                                        <TableColumn fx:id="colNgay" prefWidth="160" text="Ngày"/>
-                                        <TableColumn fx:id="colNhanVien" prefWidth="160" text="Nhân viên"/>
-                                        <TableColumn fx:id="colKhach" prefWidth="200" text="Khách"/>
-                                        <TableColumn fx:id="colTongTien" prefWidth="140" text="Tổng tiền (₫)"/>
+                                        <TableColumn fx:id="colMaHD" prefWidth="100" text="Mã" />
+                                        <TableColumn fx:id="colNgay" prefWidth="160" text="Ngày" />
+                                        <TableColumn fx:id="colNhanVien" prefWidth="160" text="Nhân viên" />
+                                        <TableColumn fx:id="colKhach" prefWidth="200" text="Khách" />
+                                        <TableColumn fx:id="colTongTien" prefWidth="140" text="Tổng tiền (₫)" />
                                         
                                         <!-- ✅ Cột in hóa đơn khớp controller -->
-                                        <TableColumn fx:id="colInHD" prefWidth="120" text="In hóa đơn"/>
+                                        <TableColumn fx:id="colInHD" prefWidth="120" text="In hóa đơn" />
                                     </columns>
                                 </TableView>
                             </children>
-                            <padding><Insets top="12" right="12" bottom="12" left="12"/></padding>
+                            <padding><Insets bottom="12" left="12" right="12" top="12" /></padding>
                         </VBox>
                     </content>
                 </Tab>

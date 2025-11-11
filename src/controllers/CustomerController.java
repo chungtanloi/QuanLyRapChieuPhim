@@ -15,6 +15,15 @@ import javafx.geometry.Insets;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.*;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
+import javafx.scene.Parent;
+import java.io.IOException;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Node;
+
 
 public class CustomerController {
 
@@ -252,4 +261,48 @@ public class CustomerController {
         tongTien += (long) soLuong * donGia;
         lblTong.setText(String.format("%,d đ", tongTien));
     }
+ // ====== ĐĂNG XUẤT ======
+@FXML
+private void onLogout(ActionEvent event) {
+    Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+    confirm.setTitle("Đăng xuất");
+    confirm.setHeaderText("Bạn có chắc muốn đăng xuất?");
+    confirm.setContentText("Mọi tiến trình đang chạy sẽ kết thúc và quay về màn hình đăng nhập.");
+
+    Optional<ButtonType> choice = confirm.showAndWait();
+    if (choice.isEmpty() || choice.get() != ButtonType.OK) {
+        return;
+    }
+
+    try {
+        // Dọn state cục bộ của CustomerController
+        selectedVeIds.clear();
+        gioVe.clear();
+        tongTien = 0;
+        if (lblTong != null) lblTong.setText("0 đ");
+
+        // Lấy Stage hiện tại
+        Node src = (event != null && event.getSource() instanceof Node)
+                ? (Node) event.getSource()
+                : tilePhim; // fallback nếu không có event
+        if (src == null || src.getScene() == null) {
+            new Alert(Alert.AlertType.ERROR, "Không tìm thấy cửa sổ hiện tại để chuyển cảnh!").show();
+            return;
+        }
+
+        javafx.stage.Stage stage = (javafx.stage.Stage) src.getScene().getWindow();
+
+        // Chuyển về login.fxml (đổi path cho đúng project của bạn)
+        Parent loginRoot = FXMLLoader.load(getClass().getResource("/models/login.fxml"));
+        javafx.scene.Scene scene = new javafx.scene.Scene(loginRoot);
+        stage.setScene(scene);
+        stage.setTitle("Đăng nhập");
+        stage.show();
+
+    } catch (IOException ex) {
+        ex.printStackTrace();
+        new Alert(Alert.AlertType.ERROR, "Không thể mở màn hình đăng nhập: " + ex.getMessage()).show();
+    }
+}
+
 }

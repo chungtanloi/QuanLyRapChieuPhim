@@ -5,17 +5,12 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -29,7 +24,7 @@
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </BorderPane.margin>
          <children>
-            <ImageView  fitHeight="150.0" fitWidth="60.0"  pickOnBounds="true" preserveRatio="true">
+            <ImageView fitHeight="150.0" fitWidth="60.0" pickOnBounds="true" preserveRatio="true">
                <image>
                   <Image url="@../Application/image/cinema.png" />
                </image>
@@ -39,16 +34,8 @@
                   <Font size="48.0" />
                </font>
             </Label>
-            <TextField promptText="Search" styleClass="text-field" stylesheets="@styles.css" HBox.hgrow="ALWAYS" />
-            <Button contentDisplay="RIGHT" graphicTextGap="10.0" layoutX="816.0" layoutY="44.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
-               <graphic>
-                  <ImageView fitHeight="20.0" fitWidth="20.0" opacity="0.51" pickOnBounds="true" preserveRatio="true" styleClass="button-icon">
-                     <image>
-                        <Image url="@../Application/image/search.png" />
-                     </image>
-                  </ImageView>
-               </graphic>
-            </Button>
+            <FlowPane prefHeight="70.0" prefWidth="279.0" />
+            <Button contentDisplay="RIGHT" graphicTextGap="10.0" layoutX="816.0" layoutY="44.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css" />
             <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" styleClass="button-icon">
@@ -58,7 +45,7 @@
                   </ImageView>
                </graphic>
             </Button>
-            <Button contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
+            <Button fx:id="btnLogout" contentDisplay="RIGHT" graphicTextGap="10.0" mnemonicParsing="false" onAction="#onLogout" style="-fx-background-color: #00000000;" styleClass="nav-button" stylesheets="@styles.css">
                <graphic>
                   <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true" styleClass="button-icon">
                      <image>
@@ -78,7 +65,7 @@
                   <Insets bottom="8.0" left="12.0" right="12.0" top="8.0" />
                </padding>
                <children>
-                  <Button alignment="TOP_LEFT" mnemonicParsing="false" onAction="#handleNav" userData="/models/home.fxml" prefHeight="46.0" prefWidth="248.0" stylesheets="@styles.css" text="Trang chủ" VBox.vgrow="ALWAYS">
+                  <Button alignment="TOP_LEFT" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="248.0" stylesheets="@styles.css" text="Trang chủ" userData="/models/home.fxml" VBox.vgrow="ALWAYS">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -94,7 +81,7 @@
                         <String fx:value="active" />
                      </styleClass>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="18.0" mnemonicParsing="false" onAction="#handleNav"  userData="/models/film.fxml" prefHeight="46.0" prefWidth="248.0" styleClass="nav-button" text="Quản lý phim">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="18.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="248.0" styleClass="nav-button" text="Quản lý phim" userData="/models/film.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -106,7 +93,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="72.0" mnemonicParsing="false" onAction="#handleNav" userData="/models/cinema.fxml" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý rạp chiếu">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="72.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý rạp chiếu" userData="/models/cinema.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -118,7 +105,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="127.0" mnemonicParsing="false" onAction="#handleNav" userData="/models/screeningrate.fxml" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý suất chiếu">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="127.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý suất chiếu" userData="/models/screeningrate.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -130,7 +117,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="181.0" mnemonicParsing="false" onAction="#handleNav" userData="/models/staff.fxml" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý nhân viên">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="181.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý nhân viên" userData="/models/staff.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -142,7 +129,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="236.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" userData="/models/customer.fxml" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý khách hàng">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="236.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý khách hàng" userData="/models/customer.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -154,7 +141,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="290.0" mnemonicParsing="false" onAction="#handleNav" userData="/models/statistics.fxml" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Thống kê báo cáo">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="290.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="245.0" styleClass="nav-button" stylesheets="@styles.css" text="Thống kê báo cáo" userData="/models/statistics.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -166,7 +153,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="344.0" mnemonicParsing="false" onAction="#handleNav" userData="/models/sale.fxml" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quán lý khuyến mãi">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="344.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quán lý khuyến mãi" userData="/models/sale.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" opacity="0.65" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -178,7 +165,7 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
-                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="399.0" mnemonicParsing="false" onAction="#handleNav" userData="/models/product.fxml" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý sản phẩm">
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="399.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý sản phẩm" userData="/models/product.fxml">
                      <graphic>
                         <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
                            <image>
@@ -203,7 +190,7 @@
       </VBox>
    </left>
    <center>
-  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED"/>
+  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" />
 </center>
 
    <bottom>

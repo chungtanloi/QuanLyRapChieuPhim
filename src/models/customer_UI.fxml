@@ -26,6 +26,7 @@
                 <ComboBox fx:id="cbRap" />
                 <ComboBox fx:id="cbDinhDang" />
                 <Button onAction="#onRefresh" text="Làm mới" />
+            <Button fx:id="btnLogout" mnemonicParsing="false" onAction="#onLogout" text="Đăng xuất" />
             </children>
         </HBox>
     </top>

@@ -1,11 +1,89 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1">
-    
+<AnchorPane id="AnchorPane" prefHeight="433.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.StaffController">
+   <children>
+      <VBox layoutX="14.0" layoutY="5.0" prefHeight="602.0" prefWidth="1079.0" spacing="20" styleClass="main-content">
+         <padding>
+            <Insets bottom="20" left="30" right="30" top="20" />
+         </padding>
+
+         <children>
+            <!-- Thanh công cụ -->
+            <HBox spacing="12">
+               <children>
+                  <Button onAction="#handleAddEmployee" text="Thêm nhân viên" />
+                  <TextField fx:id="txtTimKiemNV" promptText="Tìm theo mã, tên, email, SĐT..." HBox.hgrow="ALWAYS" />
+                  <Button onAction="#handleSearchEmployee" text="Tìm kiếm" />
+               </children>
+            </HBox>
+
+            <!-- Thống kê nhanh -->
+            <HBox alignment="CENTER" spacing="20">
+               <children>
+                  <VBox spacing="5" styleClass="stat-card, stat-blue" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="stat-label" text="Tổng nhân viên" />
+                        <Label fx:id="totalEmployeesLabel" styleClass="stat-value" text="0" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="5" styleClass="stat-card, stat-green" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="stat-label" text="Đang làm việc" />
+                        <Label fx:id="activeEmployeesLabel" styleClass="stat-value" text="0" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="5" styleClass="stat-card, stat-yellow" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="stat-label" text="Tạm nghỉ / Nghỉ phép" />
+                        <Label fx:id="onLeaveEmployeesLabel" styleClass="stat-value" text="0" />
+                     </children>
+                  </VBox>
+                  <VBox spacing="5" styleClass="stat-card, stat-purple" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label styleClass="stat-label" text="Tài khoản hoạt động" />
+                        <Label fx:id="activeAccountsLabel" styleClass="stat-value" text="0" />
+                     </children>
+                  </VBox>
+               </children>
+            </HBox>
+
+            <!-- Bảng nhân viên -->
+            <VBox styleClass="table-container" VBox.vgrow="ALWAYS">
+               <children>
+                  <TableView fx:id="employeeTable" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="colMaNhanVien" prefWidth="120" text="Mã NV" />
+                        <TableColumn fx:id="colHoTen" prefWidth="200" text="Họ Tên" />
+                        <TableColumn fx:id="colEmail" prefWidth="220" text="Email" />
+                        <TableColumn fx:id="colSoDienThoai" prefWidth="140" text="SĐT" />
+                        <TableColumn fx:id="colNgayVaoLam" prefWidth="140" text="Ngày vào làm" />
+                        <TableColumn fx:id="colTrangThai" prefWidth="140" text="Trạng thái" />
+                        <TableColumn fx:id="colThaoTac" prefWidth="160" text="Thao tác" />
+                     </columns>
+
+                     <placeholder>
+                        <VBox alignment="CENTER" spacing="10">
+                           <children>
+                              <Label style="-fx-font-size: 48px; -fx-opacity: 0.3;" text="🧑‍💼" />
+                              <Label styleClass="empty-message" text="Chưa có nhân viên" />
+                              <Label styleClass="empty-submessage" text="Nhấn 'Thêm nhân viên' để bắt đầu" />
+                           </children>
+                        </VBox>
+                     </placeholder>
+                  </TableView>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+   </children>
 </AnchorPane>

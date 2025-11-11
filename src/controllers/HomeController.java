@@ -17,6 +17,28 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import database.DBConnection;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.scene.control.Alert;
+
+import javafx.fxml.FXML;
+
+import javafx.scene.control.TextField;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.Alert;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.CallableStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import java.io.IOException;
 import java.net.URL;
@@ -26,20 +48,28 @@ import java.util.*;
 public class HomeController {
 
     // ====== FXML refs ======
-    @FXML private VBox sidebar;
-    @FXML private ImageView imgToggle;
-    @FXML private ScrollPane scroll;
+    @FXML
+    private VBox sidebar;
+    @FXML
+    private ImageView imgToggle;
+    @FXML
+    private ScrollPane scroll;
 
     // ⚙️ Các thành phần thống kê (trùng với home.fxml)
-    @FXML private Label lblDoanhThuHomNay;
-    @FXML private Label lblTongVeBan;
-    @FXML private Label lblTiLeLapDay;
-    @FXML private LineChart<String, Number> chartDoanhThu;
-    @FXML private PieChart chartPhanBoPhim;
+    @FXML
+    private Label lblDoanhThuHomNay;
+    @FXML
+    private Label lblTongVeBan;
+    @FXML
+    private Label lblTiLeLapDay;
+    @FXML
+    private LineChart<String, Number> chartDoanhThu;
+    @FXML
+    private PieChart chartPhanBoPhim;
 
     // ====== State ======
     private boolean collapsed = false;
-    private final double expandedWidth  = 260;
+    private final double expandedWidth = 260;
     private final double collapsedWidth = 72;
     private final List<Button> menuButtons = new ArrayList<>();
     private final Map<String, Parent> viewCache = new HashMap<>();
@@ -48,8 +78,12 @@ public class HomeController {
     @FXML
     private void initialize() {
         System.out.println("[HomeController] initialize()");
-        if (imgToggle != null) imgToggle.setStyle("-fx-cursor: hand;");
-        if (sidebar != null) collectMenuButtons(sidebar);
+        if (imgToggle != null) {
+            imgToggle.setStyle("-fx-cursor: hand;");
+        }
+        if (sidebar != null) {
+            collectMenuButtons(sidebar);
+        }
         if (scroll != null && scroll.getContent() instanceof VBox) {
             VBox content = (VBox) scroll.getContent();
             content.setFillWidth(true);
@@ -77,9 +111,13 @@ public class HomeController {
     // ====== ĐIỀU HƯỚNG ======
     @FXML
     private void handleNav(ActionEvent e) {
-        if (!(e.getSource() instanceof Button b)) return;
+        if (!(e.getSource() instanceof Button b)) {
+            return;
+        }
         Object ud = b.getUserData();
-        if (ud == null) return;
+        if (ud == null) {
+            return;
+        }
         String fxmlPath = ud.toString();
         if (loadViewIntoCenter(fxmlPath)) {
             highlightActiveButton(b);
@@ -87,7 +125,9 @@ public class HomeController {
     }
 
     private boolean loadViewIntoCenter(String fxmlPath) {
-        if (scroll == null) return false;
+        if (scroll == null) {
+            return false;
+        }
         try {
             Parent view = viewCache.get(fxmlPath);
             if (view == null) {
@@ -108,14 +148,17 @@ public class HomeController {
     }
 
     private void highlightActiveButton(Button active) {
-        for (Button btn : menuButtons) btn.getStyleClass().remove("active");
-        if (!active.getStyleClass().contains("active")) active.getStyleClass().add("active");
+        for (Button btn : menuButtons) {
+            btn.getStyleClass().remove("active");
+        }
+        if (!active.getStyleClass().contains("active")) {
+            active.getStyleClass().add("active");
+        }
     }
 
     // =============================================================
     // ========== 📊 CÁC HÀM LẤY DỮ LIỆU DASHBOARD ==================
     // =============================================================
-
     private void loadTongQuan() {
         String sqlDoanhThu = """
             SELECT IFNULL(SUM(tong_tien),0) AS doanh_thu
@@ -138,8 +181,7 @@ public class HomeController {
 
         try (Connection conn = DBConnection.getConnection()) {
             // Doanh thu hôm nay
-            try (PreparedStatement ps = conn.prepareStatement(sqlDoanhThu);
-                 ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlDoanhThu); ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     double dt = rs.getDouble("doanh_thu");
                     lblDoanhThuHomNay.setText(String.format("%,.0f VNĐ", dt));
@@ -147,16 +189,14 @@ public class HomeController {
             }
 
             // Tổng vé bán
-            try (PreparedStatement ps = conn.prepareStatement(sqlTongVe);
-                 ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlTongVe); ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     lblTongVeBan.setText(rs.getInt("tong_ve") + " vé");
                 }
             }
 
             // Tỉ lệ lấp đầy
-            try (PreparedStatement ps = conn.prepareStatement(sqlTiLeLapDay);
-                 ResultSet rs = ps.executeQuery()) {
+            try (PreparedStatement ps = conn.prepareStatement(sqlTiLeLapDay); ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     lblTiLeLapDay.setText(rs.getDouble("tile") + "%");
                 }
@@ -176,9 +216,7 @@ public class HomeController {
             LIMIT 7;
         """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
             XYChart.Series<String, Number> series = new XYChart.Series<>();
             series.setName("Doanh thu 7 ngày gần nhất");
@@ -212,9 +250,7 @@ public class HomeController {
             LIMIT 5;
         """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
             chartPhanBoPhim.getData().clear();
 
@@ -231,4 +267,119 @@ public class HomeController {
             e.printStackTrace();
         }
     }
+
+    @FXML
+    private TextField txtTimKiem;
+    @FXML
+    private TableView<SearchResult> tblKetQua;
+    @FXML
+    private TableColumn<SearchResult, String> colLoai, colMa, colTen, colThongTin;
+
+    @FXML
+    public void timKiemTongHop() {
+        String tuKhoa = txtTimKiem.getText().trim();
+        if (tuKhoa.isEmpty()) {
+            Alert alert = new Alert(Alert.AlertType.WARNING, "Vui lòng nhập từ khóa tìm kiếm!");
+            alert.show();
+            return;
+        }
+
+        ObservableList<SearchResult> ketQua = FXCollections.observableArrayList();
+        try (Connection conn = DBConnection.getConnection()) {
+            // Ghi log tìm kiếm
+            String logSQL = "INSERT INTO log_tim_kiem(tu_khoa) VALUES (?)";
+            try (PreparedStatement logStmt = conn.prepareStatement(logSQL)) {
+                logStmt.setString(1, tuKhoa);
+                logStmt.executeUpdate();
+            }
+
+            // Gọi procedure
+            CallableStatement cs = conn.prepareCall("{CALL proc_tim_kiem_tong_hop(?)}");
+            cs.setString(1, tuKhoa);
+            ResultSet rs = cs.executeQuery();
+
+            while (rs.next()) {
+                ketQua.add(new SearchResult(
+                        rs.getString("loai"),
+                        rs.getString("ma"),
+                        rs.getString("ten"),
+                        rs.getString("thong_tin")
+                ));
+            }
+
+            tblKetQua.setItems(ketQua);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi tìm kiếm: " + e.getMessage());
+            alert.show();
+        }
+    }
+
+// Class phụ để chứa kết quả
+    public static class SearchResult {
+
+        private final SimpleStringProperty loai, ma, ten, thongTin;
+
+        public SearchResult(String loai, String ma, String ten, String thongTin) {
+            this.loai = new SimpleStringProperty(loai);
+            this.ma = new SimpleStringProperty(ma);
+            this.ten = new SimpleStringProperty(ten);
+            this.thongTin = new SimpleStringProperty(thongTin);
+        }
+
+        public String getLoai() {
+            return loai.get();
+        }
+
+        public String getMa() {
+            return ma.get();
+        }
+
+        public String getTen() {
+            return ten.get();
+        }
+
+        public String getThongTin() {
+            return thongTin.get();
+        }
+    }
+// ====== ĐĂNG XUẤT ======
+
+    @FXML
+    private void onLogout(ActionEvent event) {
+        // Xác nhận
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
+        confirm.setTitle("Đăng xuất");
+        confirm.setHeaderText("Bạn có chắc muốn đăng xuất?");
+        confirm.setContentText("Mọi tiến trình đang chạy sẽ kết thúc và quay về màn hình đăng nhập.");
+        Optional<javafx.scene.control.ButtonType> choice = confirm.showAndWait();
+        if (choice.isEmpty() || choice.get() != javafx.scene.control.ButtonType.OK) {
+            return;
+        }
+
+        try {
+            // Dọn state tạm (nếu có)
+            viewCache.clear();
+            menuButtons.clear();
+            collapsed = false;
+
+            // (Nếu bạn có timer/thread nền → dừng tại đây)
+            // Đổi scene sang login.fxml
+            Node src = (event != null && event.getSource() instanceof Node) ? (Node) event.getSource() : scroll;
+            javafx.stage.Stage stage = (javafx.stage.Stage) src.getScene().getWindow();
+
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/models/login.fxml"));
+            javafx.scene.Scene scene = new javafx.scene.Scene(loginRoot);
+            stage.setScene(scene);
+            stage.setTitle("Đăng nhập");
+            stage.show();
+
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            Alert err = new Alert(Alert.AlertType.ERROR, "Không thể mở màn hình đăng nhập: " + ex.getMessage());
+            err.show();
+        }
+    }
+
 }
