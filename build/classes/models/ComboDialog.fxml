@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controllers.ComboDialogController"
+            prefWidth="500" prefHeight="400"
+            style="-fx-background-color: #f9fafb; -fx-border-color: #90caf9; -fx-border-radius: 6; -fx-background-radius: 6;">
+
+    <children>
+        <VBox spacing="15" alignment="TOP_CENTER" prefWidth="500">
+            <padding><Insets top="20" left="20" right="20" bottom="20"/></padding>
+
+            <Label text="🎬 Chọn Combo" style="-fx-font-size:20px; -fx-font-weight:bold; -fx-text-fill:#1565c0;"/>
+
+            <TableView fx:id="tblCombo" prefHeight="250" prefWidth="460">
+                <columns>
+                    <TableColumn fx:id="colChon" text="Chọn" prefWidth="70"/>
+                    <TableColumn fx:id="colTenCombo" text="Tên Combo" prefWidth="230"/>
+                    <TableColumn fx:id="colGia" text="Giá (VNĐ)" prefWidth="130"/>
+                </columns>
+            </TableView>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT" prefWidth="460">
+                <Label text="Tổng tiền:" style="-fx-font-weight:bold;"/>
+                <Label fx:id="lblTongTien" text="0" style="-fx-text-fill:#0d47a1; -fx-font-weight:bold;"/>
+            </HBox>
+
+            <HBox spacing="15" alignment="CENTER">
+                <Button text="❌ Hủy" onAction="#onCancel" prefWidth="120"/>
+                <Button text="✅ Xác nhận" onAction="#onConfirm" prefWidth="150" style="-fx-background-color:#42a5f5; -fx-text-fill:white;"/>
+            </HBox>
+        </VBox>
+    </children>
+</AnchorPane>

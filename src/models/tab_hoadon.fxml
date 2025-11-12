@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controllers.HoaDonController">
+    <top>
+        <HBox spacing="8">
+            <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+            <children>
+                <DatePicker fx:id="dpFrom"/>
+                <DatePicker fx:id="dpTo"/>
+                <TextField fx:id="txtMaHD" promptText="Mã hóa đơn..."/>
+                <Button fx:id="btnTraCuuHD" text="Tra cứu"/>
+            </children>
+        </HBox>
+    </top>
+    <center>
+        <TableView fx:id="tblHoaDon">
+            <columns>
+                <TableColumn fx:id="colMaHD"      text="Mã"        prefWidth="90"/>
+                <TableColumn fx:id="colNgay"      text="Ngày"      prefWidth="160"/>
+                <TableColumn fx:id="colNhanVien"  text="Nhân viên" prefWidth="180"/>
+                <TableColumn fx:id="colKhach"     text="Khách"     prefWidth="180"/>
+                <TableColumn fx:id="colTongTien"  text="Tổng tiền" prefWidth="140"/>
+                <TableColumn fx:id="colInHD"      text="In"        prefWidth="70"/>
+            </columns>
+        </TableView>
+    </center>
+</BorderPane>

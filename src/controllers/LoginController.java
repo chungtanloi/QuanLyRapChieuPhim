@@ -67,7 +67,7 @@ public class LoginController {
         } else if ("NHAN_VIEN".equalsIgnoreCase(role)) {
             loader = new FXMLLoader(getClass().getResource("/models/nhanvien.fxml"));
             view = loader.load();
-            NhanVienController nvController = loader.getController();
+            NhanVienShellController nvController = loader.getController();
             nvController.setTenNhanVien(name);
         } else {
             loader = new FXMLLoader(getClass().getResource("/models/customer_UI.fxml"));

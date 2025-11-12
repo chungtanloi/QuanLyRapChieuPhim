@@ -13,6 +13,14 @@
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/styles_nv.css</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/DonHang.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/CustomerController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/CinemaController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/cinema.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/staff.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/StatisticsController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/StaffController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/customer.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/Customer_mnController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/form.fxml</file>
         </group>
     </open-files>
 </project-private>

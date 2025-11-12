@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/25"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="controllers.SuatChieuController">
+
+    <center>
+        <TableView fx:id="tblSuatChieu">
+            <columns>
+                <TableColumn fx:id="colPoster"    text="Poster"       prefWidth="80"/>
+                <TableColumn fx:id="colPhim"      text="Phim"         prefWidth="220"/>
+                <TableColumn fx:id="colPhong"     text="Phòng"        prefWidth="120"/>
+                <TableColumn fx:id="colGio"       text="Giờ"          prefWidth="100"/>
+                <TableColumn fx:id="colGia"       text="Giá"          prefWidth="120"/>
+                <TableColumn fx:id="colTrangThai" text="Trạng thái"   prefWidth="120"/>
+                <TableColumn fx:id="colHanhDong"  text=""             prefWidth="120"/>
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <Pagination fx:id="paginationSuatChieu"
+                    maxPageIndicatorCount="10"
+                    BorderPane.alignment="CENTER"/>
+    </bottom>
+</BorderPane>
