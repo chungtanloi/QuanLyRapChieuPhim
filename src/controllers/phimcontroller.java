@@ -314,6 +314,97 @@ public class PhimController {
         sql.append(" GROUP BY p.ma_phim ORDER BY p.ngay_phat_hanh DESC");
         
         loadPhimTable(sql.toString(), params);
+<<<<<<< HEAD
+=======
+    }
+    
+    @FXML
+    private void handleThemMoi() {
+        openThemSuaPhimDialog(null);
+    }
+
+    @FXML
+    private void handleSuaPhim() {
+        film selectedPhim = tblPhim.getSelectionModel().getSelectedItem();
+        if (selectedPhim == null) {
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một phim để sửa.");
+            return;
+        }
+        openThemSuaPhimDialog(selectedPhim);
+    }
+    
+    private void openThemSuaPhimDialog(film phimToEdit) {
+        // ... (Code mở dialog đã có, không thay đổi) ...
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/views/ThemSuaPhimDialog.fxml"));
+            Parent parent = loader.load();
+            
+            ThemSuaphimController controller = loader.getController();
+            controller.setParentController(this); 
+            
+            Stage stage = new Stage();
+            stage.setTitle((phimToEdit == null ? "Thêm Phim Mới" : "Sửa Phim: " + phimToEdit.getTenPhim()));
+            stage.setScene(new Scene(parent));
+            stage.initModality(Modality.APPLICATION_MODAL); 
+            
+            if (phimToEdit != null) {
+                controller.setPhimData(phimToEdit); 
+            }
+
+            stage.showAndWait();
+            
+        } catch (IOException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi tải giao diện", "Không tìm thấy file FXML Dialog: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+    @FXML
+    private void handleXoaPhim() {
+        // ... (Code xóa phim đã có, không thay đổi) ...
+        film selectedPhim = tblPhim.getSelectionModel().getSelectedItem();
+        if (selectedPhim == null) {
+            showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng chọn một phim để xóa.");
+            return;
+        }
+
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, 
+            "Bạn có chắc chắn muốn xóa phim '" + selectedPhim.getTenPhim() + "' (ID: " + selectedPhim.getMaPhim() + ")? Hành động này sẽ xóa suất chiếu liên quan và không thể hoàn tác.", 
+            ButtonType.YES, ButtonType.NO);
+        confirm.setTitle("Xác nhận xóa");
+        Optional<ButtonType> result = confirm.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.YES) {
+            String sql = "DELETE FROM phim WHERE ma_phim = ?";
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                
+                ps.setLong(1, selectedPhim.getMaPhim());
+                int rowsAffected = ps.executeUpdate();
+
+                if (rowsAffected > 0) {
+                    showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã xóa phim thành công.");
+                    loadPhimTable(null, null); 
+                } else {
+                    showAlert(Alert.AlertType.ERROR, "Lỗi", "Không tìm thấy phim để xóa hoặc lỗi CSDL.");
+                }
+
+            } catch (SQLException e) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi CSDL", "Không thể xóa phim. Có thể do lỗi khóa ngoại hoặc kết nối: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    // Hàm hiển thị thông báo chung
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+>>>>>>> 343bb272737cac58fdc13344f2db727abdfa78be
     }
     
     @FXML
