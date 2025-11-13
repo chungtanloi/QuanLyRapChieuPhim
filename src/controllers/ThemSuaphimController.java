@@ -26,7 +26,7 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
 
     // --- BIẾN NỘI BỘ ---
     private phim phimToEdit;
-    private phimcontroller parentController;
+    private PhimController parentController;
     private List<CheckBox> theLoaiCheckBoxes = new ArrayList<>();
     
     private static final ObservableList<String> PHAN_LOAI_LIST = FXCollections.observableArrayList(
@@ -43,7 +43,7 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
     // SETTER VÀ INITIALIZATION
     // ======================================================================
     
-    public void setParentController(phimcontroller parentController) {
+    public void setParentController(PhimController parentController) {
         this.parentController = parentController;
     }
 
@@ -226,7 +226,7 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
             showAlert(Alert.AlertType.INFORMATION, "Thành công!", "Thêm phim mới thành công.");
             
             closeWindow();
-            parentController.loadPhimTable(null, null); 
+           // parentController.loadPhimTable(null, null); 
 
         } catch (SQLException e) {
             if (conn != null) {
@@ -280,7 +280,7 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
             showAlert(Alert.AlertType.INFORMATION, "Thành công!", "Cập nhật phim thành công.");
             
             closeWindow();
-            parentController.loadPhimTable(null, null); 
+          //  parentController.loadPhimTable(null, null); 
 
         } catch (SQLException e) {
             if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
