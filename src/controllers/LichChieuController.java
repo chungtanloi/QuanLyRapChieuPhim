@@ -31,21 +31,34 @@ import java.util.*;
 
 public class LichChieuController {
 
-    @FXML private Button btnThemLichChieu, btnXemTuanTruoc, btnXemHomNay, btnXemTuanSau;
-    @FXML private ComboBox<String> cbRapLichChieu, cbPhongLichChieu;
-    @FXML private Label lblTuanHienTai, lblDateMonday, lblDateTuesday, lblDateWednesday,
+    @FXML
+    private Button btnThemLichChieu, btnXemTuanTruoc, btnXemHomNay, btnXemTuanSau;
+    @FXML
+    private ComboBox<String> cbRapLichChieu, cbPhongLichChieu;
+    @FXML
+    private Label lblTuanHienTai, lblDateMonday, lblDateTuesday, lblDateWednesday,
             lblDateThursday, lblDateFriday, lblDateSaturday, lblDateSunday;
-    @FXML private VBox containerLichChieu;
+    @FXML
+    private VBox containerLichChieu;
 
-    @FXML private ComboBox<String> cbPhim;
-    @FXML private ComboBox<String> cbPhong;
-    @FXML private ComboBox<String> cbDinhDang;
-    @FXML private DatePicker dpNgayChieu;
-    @FXML private TextField txtGioBatDau;
-    @FXML private Label lblThoiGianKetThuc;
-    @FXML private Label lblXungDot;
-    @FXML private Button btnLuu;
-    @FXML private Button btnHuy;
+    @FXML
+    private ComboBox<String> cbPhim;
+    @FXML
+    private ComboBox<String> cbPhong;
+    @FXML
+    private ComboBox<String> cbDinhDang;
+    @FXML
+    private DatePicker dpNgayChieu;
+    @FXML
+    private TextField txtGioBatDau;
+    @FXML
+    private Label lblThoiGianKetThuc;
+    @FXML
+    private Label lblXungDot;
+    @FXML
+    private Button btnLuu;
+    @FXML
+    private Button btnHuy;
 
     private LocalDate currentWeekStart;
     private ObservableList<LichChieu> lichChieuList = FXCollections.observableArrayList();
@@ -71,12 +84,12 @@ public class LichChieuController {
         cbRapLichChieu.getSelectionModel().selectFirst();
 
         // Load danh sách phòng
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ten_phong FROM phong ORDER BY ten_phong");
-             ResultSet rs = ps.executeQuery()) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT ten_phong FROM phong ORDER BY ten_phong"); ResultSet rs = ps.executeQuery()) {
 
             ObservableList<String> phongList = FXCollections.observableArrayList("Tất cả");
-            while (rs.next()) phongList.add(rs.getString("ten_phong"));
+            while (rs.next()) {
+                phongList.add(rs.getString("ten_phong"));
+            }
             cbPhongLichChieu.setItems(phongList);
             cbPhongLichChieu.getSelectionModel().selectFirst();
 
@@ -118,13 +131,13 @@ public class LichChieuController {
         lblTuanHienTai.setText("Tuần: " + monday.format(dateFormatter)
                 + " - " + monday.plusDays(6).format(dateFormatter));
 
-        lblDateMonday.setText("Thứ 2\n" + monday.format(dateFormatter));
-        lblDateTuesday.setText("Thứ 3\n" + monday.plusDays(1).format(dateFormatter));
-        lblDateWednesday.setText("Thứ 4\n" + monday.plusDays(2).format(dateFormatter));
-        lblDateThursday.setText("Thứ 5\n" + monday.plusDays(3).format(dateFormatter));
-        lblDateFriday.setText("Thứ 6\n" + monday.plusDays(4).format(dateFormatter));
-        lblDateSaturday.setText("Thứ 7\n" + monday.plusDays(5).format(dateFormatter));
-        lblDateSunday.setText("Chủ nhật\n" + monday.plusDays(6).format(dateFormatter));
+        lblDateMonday.setText("" + monday.format(dateFormatter));
+        lblDateTuesday.setText("" + monday.plusDays(1).format(dateFormatter));
+        lblDateWednesday.setText("" + monday.plusDays(2).format(dateFormatter));
+        lblDateThursday.setText("" + monday.plusDays(3).format(dateFormatter));
+        lblDateFriday.setText("" + monday.plusDays(4).format(dateFormatter));
+        lblDateSaturday.setText("" + monday.plusDays(5).format(dateFormatter));
+        lblDateSunday.setText("" + monday.plusDays(6).format(dateFormatter));
     }
 
     // =====================================================================================
@@ -154,20 +167,21 @@ public class LichChieuController {
             WHERE DATE(sc.bat_dau_luc) BETWEEN ? AND ?
         """);
 
-        if (phongFilter != null && !phongFilter.equals("Tất cả"))
+        if (phongFilter != null && !phongFilter.equals("Tất cả")) {
             sql.append(" AND ph.ten_phong = ? ");
+        }
 
         sql.append(" ORDER BY ph.ten_phong, sc.bat_dau_luc ");
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql.toString())) {
 
             int idx = 1;
             ps.setDate(idx++, java.sql.Date.valueOf(start));
             ps.setDate(idx++, java.sql.Date.valueOf(end));
 
-            if (phongFilter != null && !phongFilter.equals("Tất cả"))
+            if (phongFilter != null && !phongFilter.equals("Tất cả")) {
                 ps.setString(idx++, phongFilter);
+            }
 
             ResultSet rs = ps.executeQuery();
             lichChieuList.clear();
@@ -198,26 +212,81 @@ public class LichChieuController {
     }
 
     // ================= Render lịch lên giao diện ====================
-    private void renderLichChieuCalendar() {
-        containerLichChieu.getChildren().clear();
+    
+private void addPhongRow(GridPane grid, int row, String tenPhong, List<LichChieu> list) {
+    VBox phongCell = new VBox();
+    phongCell.setAlignment(Pos.CENTER);
+    phongCell.setStyle("-fx-background-color:#f5f5f5; -fx-border-color:#ddd; -fx-border-width:0 1 1 0;");
+    phongCell.setPrefHeight(90);
+    phongCell.setMinWidth(150);
+    phongCell.setMaxWidth(150);
 
-        List<String> phongs = new ArrayList<>(lichChieuTheoPhong.keySet());
-        Collections.sort(phongs);
+    Label lbl = new Label(tenPhong);
+    lbl.setStyle("-fx-font-weight:bold; -fx-font-size:12;");
+    phongCell.getChildren().add(lbl);
 
-        for (String phong : phongs)
-            containerLichChieu.getChildren().add(createPhongRow(phong, lichChieuTheoPhong.get(phong)));
+    grid.add(phongCell, 0, row);
 
-        if (phongs.isEmpty()) {
-            Label lbl = new Label("Không có suất chiếu trong tuần này.");
-            lbl.setStyle("-fx-text-fill:#888; -fx-padding:20;");
-            containerLichChieu.getChildren().add(lbl);
-        }
+    for (int i = 0; i < 7; i++) {
+        LocalDate ngay = currentWeekStart.plusDays(i);
+        VBox dayCell = createDayCell(ngay, list);
+        grid.add(dayCell, i + 1, row);
     }
+}
+
+
+    
+private void renderLichChieuCalendar() {
+    containerLichChieu.getChildren().clear();
+
+    GridPane grid = new GridPane();
+    grid.setHgap(0);
+    grid.setVgap(0);
+    grid.setStyle("-fx-border-color:#ddd; -fx-border-width:1;");
+
+    // CỘT 0 = PHÒNG - RỘNG CỐ ĐỊNH 150px (khớp với FXML)
+    ColumnConstraints colPhong = new ColumnConstraints(150);
+    colPhong.setMinWidth(150);
+    colPhong.setMaxWidth(150);
+    grid.getColumnConstraints().add(colPhong);
+
+    // 7 CỘT NGÀY - RỘNG CỐ ĐỊNH 150px (khớp với FXML)
+    for (int i = 0; i < 7; i++) {
+        ColumnConstraints col = new ColumnConstraints(150);
+        col.setMinWidth(150);
+        col.setMaxWidth(150);
+        grid.getColumnConstraints().add(col);
+    }
+
+    List<String> phongs = new ArrayList<>(lichChieuTheoPhong.keySet());
+    Collections.sort(phongs);
+
+    int row = 0;
+    for (String phong : phongs) {
+        addPhongRow(grid, row, phong, lichChieuTheoPhong.get(phong));
+        row++;
+    }
+
+    if (phongs.isEmpty()) {
+        Label lbl = new Label("Không có suất chiếu tuần này.");
+        lbl.setStyle("-fx-padding:20; -fx-text-fill:#666;");
+        containerLichChieu.getChildren().add(lbl);
+        return;
+    }
+
+    ScrollPane sp = new ScrollPane(grid);
+    sp.setFitToWidth(false); // QUAN TRỌNG: Đổi thành false để không tự động scale
+    sp.setStyle("-fx-background-color:white;");
+    containerLichChieu.getChildren().add(sp);
+}
 
     private HBox createPhongRow(String tenPhong, List<LichChieu> list) {
         HBox row = new HBox(0);
         row.setPrefHeight(80);
-        row.setPrefWidth(120 + 150 * 7);
+        row.setPrefWidth(50 + 7 * 100);
+        row.setMinWidth(50 + 7 * 100);
+        row.setMaxWidth(50 + 7 * 100);
+
         row.setStyle("-fx-border-color:#ddd; -fx-border-width:0 0 1 0;");
 
         VBox phongCell = new VBox();
@@ -237,34 +306,41 @@ public class LichChieuController {
         return row;
     }
 
-    private VBox createDayCell(LocalDate ngay, List<LichChieu> list) {
-        VBox cell = new VBox(2);
-        cell.setPadding(new Insets(5));
-        cell.setStyle("-fx-border-color:#eee; -fx-background-color:#fafafa;");
+   private VBox createDayCell(LocalDate ngay, List<LichChieu> list) {
+    VBox cell = new VBox(2);
+    cell.setPadding(new Insets(5));
+    cell.setStyle("-fx-border-color:#eee; -fx-background-color:#fafafa;");
 
-        List<LichChieu> today = list.stream()
-                .filter(s -> s.getBatDauLuc().toLocalDate().equals(ngay))
-                .sorted(Comparator.comparing(LichChieu::getBatDauLuc))
-                .toList();
+    // Khớp với FXML header width = 150
+    cell.setPrefWidth(150);
+    cell.setMinWidth(150);
+    cell.setMaxWidth(150);
+    cell.setPrefHeight(90);
 
-        if (today.isEmpty()) {
-            Label empty = new Label("—");
-            empty.setStyle("-fx-text-fill:#bbb;");
-            empty.setAlignment(Pos.CENTER);
-            cell.getChildren().add(empty);
-        } else {
-            for (LichChieu s : today)
-                cell.getChildren().add(createSuatButton(s));
-        }
+    List<LichChieu> today = list.stream()
+            .filter(s -> s.getBatDauLuc().toLocalDate().equals(ngay))
+            .sorted(Comparator.comparing(LichChieu::getBatDauLuc))
+            .toList();
 
+    if (today.isEmpty()) {
+        Label dash = new Label("—");
+        dash.setStyle("-fx-text-fill:#ccc;");
+        cell.setAlignment(Pos.CENTER);
+        cell.getChildren().add(dash);
         return cell;
     }
 
+    for (LichChieu s : today) {
+        cell.getChildren().add(createSuatButton(s));
+    }
+
+    return cell;
+}
     private Button createSuatButton(LichChieu s) {
         Button btn = new Button(s.getBatDauLuc().toLocalTime().toString());
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setStyle("-fx-background-color:" + s.getMauSac() +
-                "; -fx-text-fill:white; -fx-font-size:10; -fx-background-radius:3;");
+        btn.setStyle("-fx-background-color:" + s.getMauSac()
+                + "; -fx-text-fill:white; -fx-font-size:10; -fx-background-radius:3;");
 
         btn.setOnAction(e -> showSuatChieuDetail(s));
         return btn;
@@ -275,11 +351,11 @@ public class LichChieuController {
         a.setTitle("Chi tiết suất chiếu");
         a.setHeaderText(s.getTenPhim());
         a.setContentText(
-                "Phòng: " + s.getTenPhong() +
-                        "\nThời gian: " + s.getBatDauLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM")) +
-                        " - " + s.getKetThucLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM")) +
-                        "\nĐịnh dạng: " + s.getDinhDang() +
-                        "\nTrạng thái: " + s.getTrangThai()
+                "Phòng: " + s.getTenPhong()
+                + "\nThời gian: " + s.getBatDauLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM"))
+                + " - " + s.getKetThucLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM"))
+                + "\nĐịnh dạng: " + s.getDinhDang()
+                + "\nTrạng thái: " + s.getTrangThai()
         );
         a.showAndWait();
     }
@@ -312,9 +388,8 @@ public class LichChieuController {
         phimMap.clear();
         ObservableList<String> phimList = FXCollections.observableArrayList();
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(
-                     "SELECT ma_phim, ten_phim FROM phim ORDER BY ten_phim")) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(
+                "SELECT ma_phim, ten_phim FROM phim ORDER BY ten_phim")) {
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
                 phimMap.put(rs.getString("ten_phim"), rs.getInt("ma_phim"));
@@ -330,11 +405,12 @@ public class LichChieuController {
         phongList.remove("Tất cả");
         cbPhong.setItems(phongList);
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ten_dinh_dang FROM dinh_dang")) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement("SELECT ten_dinh_dang FROM dinh_dang")) {
             ResultSet rs = ps.executeQuery();
             ObservableList<String> list = FXCollections.observableArrayList();
-            while (rs.next()) list.add(rs.getString("ten_dinh_dang"));
+            while (rs.next()) {
+                list.add(rs.getString("ten_dinh_dang"));
+            }
             cbDinhDang.setItems(list);
         } catch (Exception e) {
             showError("Lỗi định dạng", e.getMessage());
@@ -349,8 +425,9 @@ public class LichChieuController {
         });
         cbPhong.valueProperty().addListener((a, b, c) -> checkConflict());
 
-        if (btnHuy != null)
+        if (btnHuy != null) {
             btnHuy.setOnAction(e -> dialogStage.close());
+        }
 
         btnLuu.setOnAction(e -> saveSuatChieu());
     }
@@ -365,12 +442,13 @@ public class LichChieuController {
             int maPhim = phimMap.get(cbPhim.getValue());
             int dur = 0;
 
-            try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(
-                         "SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
+            try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(
+                    "SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
                 ps.setInt(1, maPhim);
                 ResultSet rs = ps.executeQuery();
-                if (rs.next()) dur = rs.getInt(1);
+                if (rs.next()) {
+                    dur = rs.getInt(1);
+                }
             }
 
             LocalDate ngay = dpNgayChieu.getValue();
@@ -378,10 +456,11 @@ public class LichChieuController {
 
             LocalDateTime ketThuc = LocalDateTime.of(ngay, gio).plusMinutes(dur);
 
-            lblThoiGianKetThuc.setText("Thời gian kết thúc: " +
-                    ketThuc.format(DateTimeFormatter.ofPattern("HH:mm dd/MM")));
+            lblThoiGianKetThuc.setText("Thời gian kết thúc: "
+                    + ketThuc.format(DateTimeFormatter.ofPattern("HH:mm dd/MM")));
 
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
     }
 
     private void checkConflict() {
@@ -389,8 +468,8 @@ public class LichChieuController {
         btnLuu.setDisable(true);
 
         try {
-            if (cbPhim.getValue() == null || cbPhong.getValue() == null ||
-                    dpNgayChieu.getValue() == null || txtGioBatDau.getText().isBlank()) {
+            if (cbPhim.getValue() == null || cbPhong.getValue() == null
+                    || dpNgayChieu.getValue() == null || txtGioBatDau.getText().isBlank()) {
                 return;
             }
 
@@ -400,12 +479,13 @@ public class LichChieuController {
             int dur = 0;
             int maPhim = phimMap.get(cbPhim.getValue());
 
-            try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(
-                         "SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
+            try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(
+                    "SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
                 ps.setInt(1, maPhim);
                 ResultSet rs = ps.executeQuery();
-                if (rs.next()) dur = rs.getInt(1);
+                if (rs.next()) {
+                    dur = rs.getInt(1);
+                }
             }
 
             LocalDateTime ketThucMoi = batDauMoi.plusMinutes(dur);
@@ -420,8 +500,7 @@ public class LichChieuController {
                 AND sc.bat_dau_luc < ? AND DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) > ?
             """;
 
-            try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setString(1, cbPhong.getValue());
                 ps.setTimestamp(2, java.sql.Timestamp.valueOf(ketThucMoi));
                 ps.setTimestamp(3, java.sql.Timestamp.valueOf(batDauMoi));
@@ -453,9 +532,8 @@ public class LichChieuController {
             LocalTime gioBD = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
             LocalDateTime batDau = LocalDateTime.of(dpNgayChieu.getValue(), gioBD);
 
-            try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(
-                         "INSERT INTO suat_chieu(ma_phim, ma_phong, ma_dinh_dang, bat_dau_luc, gia_co_ban, trang_thai) VALUES(?,?,?,?,0,'MO_BAN')")) {
+            try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO suat_chieu(ma_phim, ma_phong, ma_dinh_dang, bat_dau_luc, gia_co_ban, trang_thai) VALUES(?,?,?,?,0,'MO_BAN')")) {
                 ps.setInt(1, maPhim);
                 ps.setInt(2, maPhong);
                 ps.setInt(3, maDinhDang);
@@ -477,8 +555,7 @@ public class LichChieuController {
 
     private int getMaByName(String table, String maCol, String tenCol, String ten) throws Exception {
         String sql = "SELECT " + maCol + " FROM " + table + " WHERE " + tenCol + "=?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ten);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;

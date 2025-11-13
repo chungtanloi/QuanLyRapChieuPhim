@@ -1,7 +1,7 @@
 package controllers;
 
 import database.DBConnection;
-import models.phim;
+import models.film;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -25,7 +25,7 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
     @FXML private VBox vboxTheLoai; 
 
     // --- BIẾN NỘI BỘ ---
-    private phim phimToEdit;
+    private film phimToEdit;
     private PhimController parentController;
     private List<CheckBox> theLoaiCheckBoxes = new ArrayList<>();
     
@@ -48,9 +48,9 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
     }
 
     /**
-     * Nạp dữ liệu phim vào form khi ở chế độ Sửa.
+     * Nạp dữ liệu film vào form khi ở chế độ Sửa.
      */
-    public void setPhimData(phim phim) {
+    public void setPhimData(film phim) {
         this.phimToEdit = phim;
         lblTitle.setText("SỬA THÔNG TIN PHIM: " + phim.getTenPhim());
         
