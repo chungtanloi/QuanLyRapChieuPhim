@@ -137,11 +137,11 @@ public class PhimController {
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
                 // Sửa: Thêm kiểu dữ liệu 'film' vào lần khai báo đầu tiên
-                film temp = new film(maPhim); // <<--- ĐÃ SỬA TẠI ĐÂY
-                
-                temp.setMoTa(rs.getString("mo_ta"));
-                temp.setQuocGia(rs.getString("quoc_gia"));
-                return temp;
+//                film temp = new film(maPhim); // <<--- ĐÃ SỬA TẠI ĐÂY
+//                
+//                temp.setMoTa(rs.getString("mo_ta"));
+//                temp.setQuocGia(rs.getString("quoc_gia"));
+//                return temp;
             }
         } catch (SQLException e) {
 // ...
