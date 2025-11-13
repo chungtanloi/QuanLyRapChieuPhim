@@ -8,29 +8,33 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+
+import controllers.PhimController; // ⭐ BẮT BUỘC CÓ
+
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimController (chữ 's' thường)
+public class ThemSuaphimController {
 
-    // --- FXML FIELDS ---
+    // ===================== FXML FIELD =====================
     @FXML private Label lblTitle;
     @FXML private TextField txtTenPhim;
     @FXML private TextField txtThoiLuong;
     @FXML private ComboBox<String> cbPhanLoai;
     @FXML private DatePicker dpNgayPhatHanh;
     @FXML private TextArea txtMoTa;
-    @FXML private VBox vboxTheLoai; 
+    @FXML private VBox vboxTheLoai;
 
-    // --- BIẾN NỘI BỘ ---
+    // ===================== BIẾN NỘI BỘ =====================
     private film phimToEdit;
     private PhimController parentController;
+
     private List<CheckBox> theLoaiCheckBoxes = new ArrayList<>();
-    
+
     private static final ObservableList<String> PHAN_LOAI_LIST = FXCollections.observableArrayList(
-        "P", "T13", "T16", "T18"
+            "P", "T13", "T16", "T18"
     );
 
     @FXML
@@ -39,273 +43,273 @@ public class ThemSuaphimController { // LƯU Ý: TÊN CLASS LÀ ThemSuaphimContr
         loadTheLoaiFromDatabase();
     }
 
-    // ======================================================================
-    // SETTER VÀ INITIALIZATION
-    // ======================================================================
-    
     public void setParentController(PhimController parentController) {
         this.parentController = parentController;
     }
 
-    /**
-     * Nạp dữ liệu film vào form khi ở chế độ Sửa.
-     */
+    // ======================================================
+    //            NẠP DỮ LIỆU PHIM CŨ KHI SỬA
+    // ======================================================
     public void setPhimData(film phim) {
         this.phimToEdit = phim;
-        lblTitle.setText("SỬA THÔNG TIN PHIM: " + phim.getTenPhim());
-        
-        // Nạp dữ liệu cơ bản
+
+        lblTitle.setText("SỬA PHIM: " + phim.getTenPhim());
         txtTenPhim.setText(phim.getTenPhim());
         txtThoiLuong.setText(String.valueOf(phim.getThoiLuongPhut()));
-        
-        // 🚨 FIX: Nạp Ngày Phát Hành gốc và Mô tả từ CSDL
-        loadOriginalPhimData(phim.getMaPhim()); 
-        
+
         cbPhanLoai.getSelectionModel().select(phim.getPhanLoai());
-        
-        loadSelectedTheLoai(phim.getMaPhim()); // Nạp thể loại đã chọn
+
+        // ⭐ Lấy Ngày phát hành + mô tả từ DB
+        loadOriginalPhimData(phim.getMaPhim());
+
+        // ⭐ Load thể loại đã chọn
+        loadSelectedTheLoai(phim.getMaPhim());
     }
-    
-    /**
-     * Truy vấn CSDL để lấy Ngày Phát Hành (Date) và Mô tả chi tiết.
-     */
+
     private void loadOriginalPhimData(long maPhim) {
         String sql = "SELECT ngay_phat_hanh, mo_ta FROM phim WHERE ma_phim = ?";
-        
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            
+
             ps.setLong(1, maPhim);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    Date sqlDate = rs.getDate("ngay_phat_hanh");
-                    if (sqlDate != null) {
-                        dpNgayPhatHanh.setValue(sqlDate.toLocalDate());
-                    }
-                    // Nếu 'mo_ta' là NULL trong DB, rs.getString() sẽ trả về null, nên cần kiểm tra.
+                    Date d = rs.getDate("ngay_phat_hanh");
+                    if (d != null) dpNgayPhatHanh.setValue(d.toLocalDate());
+
                     String moTa = rs.getString("mo_ta");
-                    txtMoTa.setText(moTa != null ? moTa : ""); 
+                    txtMoTa.setText(moTa != null ? moTa : "");
                 }
             }
+
         } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi Nạp Dữ Liệu", "Không thể nạp Ngày Phát Hành và Mô tả gốc.");
-            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể nạp ngày phát hành và mô tả.");
         }
     }
 
-
-    // ======================================================================
-    // LOGIC THỂ LOẠI (TẠO ĐỘNG VÀ XỬ LÝ)
-    // ======================================================================
-
+    // ======================================================
+    //               NẠP THỂ LOẠI TỪ DB
+    // ======================================================
     private void loadTheLoaiFromDatabase() {
         String sql = "SELECT ma_the_loai, ten_the_loai FROM the_loai ORDER BY ten_the_loai";
-        
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            
+
             while (rs.next()) {
-                long maTheLoai = rs.getLong("ma_the_loai");
-                String tenTheLoai = rs.getString("ten_the_loai");
-                
-                CheckBox cb = new CheckBox(tenTheLoai);
-                cb.setUserData(maTheLoai); // Lưu ID vào UserData
-                
+                long ma = rs.getLong("ma_the_loai");
+                String ten = rs.getString("ten_the_loai");
+
+                CheckBox cb = new CheckBox(ten);
+                cb.setUserData(ma);
+
                 theLoaiCheckBoxes.add(cb);
                 vboxTheLoai.getChildren().add(cb);
             }
+
         } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi CSDL", "Không thể nạp danh sách thể loại. Vui lòng kiểm tra bảng the_loai.");
-            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Lỗi CSDL", "Không tải được thể loại!");
         }
     }
-    
+
     private void loadSelectedTheLoai(long maPhim) {
         String sql = "SELECT ma_the_loai FROM phim_the_loai WHERE ma_phim = ?";
         List<Long> selectedIds = new ArrayList<>();
-        
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setLong(1, maPhim);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    selectedIds.add(rs.getLong("ma_the_loai"));
-                }
-            }
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) selectedIds.add(rs.getLong("ma_the_loai"));
+
         } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi CSDL", "Không thể nạp thể loại cũ.");
-            e.printStackTrace();
-            return;
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể tải thể loại cũ!");
         }
-        
+
         for (CheckBox cb : theLoaiCheckBoxes) {
-            long cbId = (Long) cb.getUserData(); 
-            cb.setSelected(selectedIds.contains(cbId));
+            long id = (Long) cb.getUserData();
+            cb.setSelected(selectedIds.contains(id));
         }
     }
 
     private List<Long> getSelectedTheLoaiIds() {
-        List<Long> maTheLoaiDaChon = new ArrayList<>();
-        for (CheckBox cb : theLoaiCheckBoxes) {
-            if (cb.isSelected()) {
-                maTheLoaiDaChon.add((Long) cb.getUserData()); 
-            }
-        }
-        return maTheLoaiDaChon;
+        List<Long> ids = new ArrayList<>();
+        for (CheckBox cb : theLoaiCheckBoxes)
+            if (cb.isSelected()) ids.add((Long) cb.getUserData());
+        return ids;
     }
 
-
-    // ======================================================================
-    // LOGIC LƯU (THÊM HOẶC CẬP NHẬT)
-    // ======================================================================
-    
+    // ======================================================
+    //                 XỬ LÝ NÚT LƯU
+    // ======================================================
     @FXML
     private void handleLuuPhim() {
-        // 1. VALIDATE DỮ LIỆU
-        String tenPhim = txtTenPhim.getText().trim();
-        if (tenPhim.isEmpty() || cbPhanLoai.getValue() == null || dpNgayPhatHanh.getValue() == null) {
-            showAlert(Alert.AlertType.WARNING, "Thiếu thông tin", "Vui lòng nhập đủ Tên phim, Phân loại và Ngày phát hành.");
+
+        if (txtTenPhim.getText().isBlank()
+                || cbPhanLoai.getValue() == null
+                || dpNgayPhatHanh.getValue() == null) {
+            showAlert(Alert.AlertType.WARNING, "Thiếu thông tin",
+                    "Tên phim, phân loại và ngày phát hành không được bỏ trống!");
             return;
         }
-        
-        int thoiLuong = 0;
+
+        int thoiLuong;
         try {
             thoiLuong = Integer.parseInt(txtThoiLuong.getText());
-        } catch (NumberFormatException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi nhập liệu", "Thời lượng phải là số nguyên.");
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Thời lượng phải là số!");
             return;
         }
 
-        if (phimToEdit == null) {
-            luuPhimMoi(tenPhim, thoiLuong, cbPhanLoai.getValue(), dpNgayPhatHanh.getValue(), txtMoTa.getText());
-        } else {
-            capNhatPhim(phimToEdit.getMaPhim(), tenPhim, thoiLuong, cbPhanLoai.getValue(), dpNgayPhatHanh.getValue(), txtMoTa.getText());
-        }
+        if (phimToEdit == null)
+            luuPhimMoi(txtTenPhim.getText(), thoiLuong, cbPhanLoai.getValue(),
+                    dpNgayPhatHanh.getValue(), txtMoTa.getText());
+        else
+            capNhatPhim(phimToEdit.getMaPhim(), txtTenPhim.getText(), thoiLuong,
+                    cbPhanLoai.getValue(), dpNgayPhatHanh.getValue(), txtMoTa.getText());
     }
 
-    private void luuPhimMoi(String tenPhim, int thoiLuong, String phanLoai, LocalDate ngayPhatHanh, String moTa) {
-        List<Long> maTheLoaiDaChon = getSelectedTheLoaiIds(); 
+    // ======================================================
+    //                 INSERT PHIM MỚI
+    // ======================================================
+    private void luuPhimMoi(String tenPhim, int thoiLuong, String phanLoai,
+                            LocalDate ngayPhatHanh, String moTa) {
+
+        List<Long> dsTheLoai = getSelectedTheLoaiIds();
         Connection conn = null;
+
         try {
             conn = DBConnection.getConnection();
-            conn.setAutoCommit(false); 
-            
-            // BƯỚC 1: INSERT PHIM
-            String sqlPhim = "INSERT INTO phim(ten_phim, thoi_luong_phut, phan_loai, ngay_phat_hanh, mo_ta) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement psPhim = conn.prepareStatement(sqlPhim, Statement.RETURN_GENERATED_KEYS);
-            psPhim.setString(1, tenPhim);
-            psPhim.setInt(2, thoiLuong);
-            psPhim.setString(3, phanLoai);
-            psPhim.setDate(4, Date.valueOf(ngayPhatHanh));
-            psPhim.setString(5, txtMoTa.getText()); // Dùng txtMoTa.getText()
-            psPhim.executeUpdate();
-            
-            long maPhimMoi = -1;
-            try (ResultSet generatedKeys = psPhim.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    maPhimMoi = generatedKeys.getLong(1);
-                } else {
-                    throw new SQLException("Thêm phim thất bại, không lấy được ID.");
+            conn.setAutoCommit(false);
+
+            String sql = "INSERT INTO phim(ten_phim, thoi_luong_phut, phan_loai, ngay_phat_hanh, mo_ta) " +
+                    "VALUES (?, ?, ?, ?, ?)";
+
+            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, tenPhim);
+            ps.setInt(2, thoiLuong);
+            ps.setString(3, phanLoai);
+            ps.setDate(4, Date.valueOf(ngayPhatHanh));
+            ps.setString(5, moTa);
+
+            ps.executeUpdate();
+
+            long maPhimMoi;
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) maPhimMoi = rs.getLong(1);
+            else throw new SQLException("Không lấy được ID phim mới!");
+
+            // Insert thể loại
+            if (!dsTheLoai.isEmpty()) {
+                String sqlTL = "INSERT INTO phim_the_loai(ma_phim, ma_the_loai) VALUES (?, ?)";
+                PreparedStatement pstl = conn.prepareStatement(sqlTL);
+
+                for (Long tl : dsTheLoai) {
+                    pstl.setLong(1, maPhimMoi);
+                    pstl.setLong(2, tl);
+                    pstl.addBatch();
                 }
-            }
-
-            // BƯỚC 2: INSERT PHIM_THE_LOAI
-            if (!maTheLoaiDaChon.isEmpty()) {
-                String sqlTheLoai = "INSERT INTO phim_the_loai(ma_phim, ma_the_loai) VALUES (?, ?)";
-                PreparedStatement psTheLoai = conn.prepareStatement(sqlTheLoai);
-                for (Long maTL : maTheLoaiDaChon) {
-                    psTheLoai.setLong(1, maPhimMoi);
-                    psTheLoai.setLong(2, maTL);
-                    psTheLoai.addBatch();
-                }
-                psTheLoai.executeBatch();
-            }
-
-            conn.commit(); 
-            showAlert(Alert.AlertType.INFORMATION, "Thành công!", "Thêm phim mới thành công.");
-            
-            closeWindow();
-           // parentController.loadPhimTable(null, null); 
-
-        } catch (SQLException e) {
-            if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            }
-             showAlert(Alert.AlertType.ERROR, "Lỗi Lưu CSDL", "Không thể thêm phim. Vui lòng kiểm tra lại CSDL và các ràng buộc.\nChi tiết: " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { ex.printStackTrace(); }
-            }
-        }
-    }
-    
-    private void capNhatPhim(long maPhim, String tenPhim, int thoiLuong, String phanLoai, LocalDate ngayPhatHanh, String moTa) {
-        List<Long> maTheLoaiMoi = getSelectedTheLoaiIds(); 
-        Connection conn = null;
-        try {
-            conn = DBConnection.getConnection();
-            conn.setAutoCommit(false); 
-            
-            // BƯỚC 1: UPDATE PHIM
-            String sqlPhim = "UPDATE phim SET ten_phim=?, thoi_luong_phut=?, phan_loai=?, ngay_phat_hanh=?, mo_ta=? WHERE ma_phim=?";
-            PreparedStatement psPhim = conn.prepareStatement(sqlPhim);
-            psPhim.setString(1, tenPhim);
-            psPhim.setInt(2, thoiLuong);
-            psPhim.setString(3, phanLoai);
-            psPhim.setDate(4, Date.valueOf(ngayPhatHanh));
-            psPhim.setString(5, txtMoTa.getText()); // Dùng txtMoTa.getText()
-            psPhim.setLong(6, maPhim);
-            psPhim.executeUpdate();
-
-            // BƯỚC 2: CẬP NHẬT PHIM_THE_LOAI (Xóa cũ, Chèn mới)
-            String sqlDeleteTL = "DELETE FROM phim_the_loai WHERE ma_phim = ?";
-            PreparedStatement psDeleteTL = conn.prepareStatement(sqlDeleteTL);
-            psDeleteTL.setLong(1, maPhim);
-            psDeleteTL.executeUpdate();
-
-            if (!maTheLoaiMoi.isEmpty()) {
-                String sqlInsertTL = "INSERT INTO phim_the_loai(ma_phim, ma_the_loai) VALUES (?, ?)";
-                PreparedStatement psInsertTL = conn.prepareStatement(sqlInsertTL);
-                for (Long maTL : maTheLoaiMoi) {
-                    psInsertTL.setLong(1, maPhim);
-                    psInsertTL.setLong(2, maTL);
-                    psInsertTL.addBatch();
-                }
-                psInsertTL.executeBatch();
+                pstl.executeBatch();
             }
 
             conn.commit();
-            showAlert(Alert.AlertType.INFORMATION, "Thành công!", "Cập nhật phim thành công.");
-            
+            showAlert(Alert.AlertType.INFORMATION, "Thành công!", "Đã thêm phim.");
+
+            if (parentController != null) parentController.loadPhimTable(null, null);
             closeWindow();
-          //  parentController.loadPhimTable(null, null); 
 
         } catch (SQLException e) {
-            if (conn != null) { try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); } }
-            showAlert(Alert.AlertType.ERROR, "Lỗi Lưu CSDL", "Không thể cập nhật phim. Vui lòng kiểm tra lại CSDL và các ràng buộc.\nChi tiết: " + e.getMessage());
-            e.printStackTrace();
+            try { if (conn != null) conn.rollback(); } catch (Exception ignored) {}
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể thêm phim!\n" + e.getMessage());
+
         } finally {
-            if (conn != null) { try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { ex.printStackTrace(); } }
+            try { if (conn != null) conn.setAutoCommit(true); conn.close(); } catch (Exception ignored) {}
         }
     }
 
+    // ======================================================
+    //                 UPDATE PHIM
+    // ======================================================
+    private void capNhatPhim(long id, String tenPhim, int thoiLuong,
+                             String phanLoai, LocalDate ngayPhatHanh, String moTa) {
+
+        List<Long> dsTheLoai = getSelectedTheLoaiIds();
+        Connection conn = null;
+
+        try {
+            conn = DBConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            String sql =
+                    "UPDATE phim SET ten_phim=?, thoi_luong_phut=?, phan_loai=?, ngay_phat_hanh=?, mo_ta=? " +
+                    "WHERE ma_phim=?";
+
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, tenPhim);
+            ps.setInt(2, thoiLuong);
+            ps.setString(3, phanLoai);
+            ps.setDate(4, Date.valueOf(ngayPhatHanh));
+            ps.setString(5, moTa);
+            ps.setLong(6, id);
+            ps.executeUpdate();
+
+            // Xóa TL cũ
+            PreparedStatement psDel = conn.prepareStatement(
+                    "DELETE FROM phim_the_loai WHERE ma_phim=?");
+            psDel.setLong(1, id);
+            psDel.executeUpdate();
+
+            // Chèn TL mới
+            if (!dsTheLoai.isEmpty()) {
+                PreparedStatement psTL = conn.prepareStatement(
+                        "INSERT INTO phim_the_loai(ma_phim, ma_the_loai) VALUES (?, ?)");
+
+                for (Long tl : dsTheLoai) {
+                    psTL.setLong(1, id);
+                    psTL.setLong(2, tl);
+                    psTL.addBatch();
+                }
+                psTL.executeBatch();
+            }
+
+            conn.commit();
+            showAlert(Alert.AlertType.INFORMATION, "Thành công!", "Đã cập nhật phim.");
+
+            if (parentController != null) parentController.loadPhimTable(null, null);
+            closeWindow();
+
+        } catch (SQLException e) {
+            try { if (conn != null) conn.rollback(); } catch (Exception ignored) {}
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể cập nhật phim!\n" + e.getMessage());
+
+        } finally {
+            try { if (conn != null) conn.setAutoCommit(true); conn.close(); } catch (Exception ignored) {}
+        }
+    }
+
+    // ================================
+    //       HỦY
+    // ================================
     @FXML
     private void handleHuy() {
         closeWindow();
     }
-    
+
     private void closeWindow() {
-        Stage stage = (Stage) txtTenPhim.getScene().getWindow();
-        stage.close();
+        Stage s = (Stage) txtTenPhim.getScene().getWindow();
+        s.close();
     }
-    
-    private void showAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    private void showAlert(Alert.AlertType t, String title, String msg) {
+        Alert a = new Alert(t);
+        a.setHeaderText(null);
+        a.setTitle(title);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 }

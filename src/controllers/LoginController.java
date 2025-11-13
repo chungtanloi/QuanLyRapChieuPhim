@@ -8,7 +8,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import database.DBConnection;
-import controllers.NhanVienController;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
