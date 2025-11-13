@@ -1,279 +1,416 @@
 package controllers;
 
 import database.DBConnection;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.stage.Modality;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.TilePane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import models.SuatChieu;
-import javafx.beans.property.SimpleStringProperty; // <<< KIỂM TRA DÒNG IMPORT QUAN TRỌNG NÀY
 
 import java.math.BigDecimal;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 public class suat_chieuController {
-    
-    @FXML private TableView<SuatChieu> tblSuatChieu;
-    @FXML private TableColumn<SuatChieu, Long> colMaSuat;
-    @FXML private TableColumn<SuatChieu, String> colTenPhimSC;
-    @FXML private TableColumn<SuatChieu, String> colPhongChieu;
-    @FXML private TableColumn<SuatChieu, String> colNgayChieu;
-    @FXML private TableColumn<SuatChieu, String> colGioChieu;
-    @FXML private TableColumn<SuatChieu, String> colDinhDang;
-    @FXML private TableColumn<SuatChieu, BigDecimal> colGiaVe;
-    @FXML private TableColumn<SuatChieu, String> colTrangThaiSC;
-    
-    @FXML private DatePicker dpLichChieu;
-    @FXML private ComboBox<String> cbPhimFilter;
-    @FXML private Button btnThemSuatChieu, btnSuaSuatChieu, btnXoaSuatChieu;
-    
-    private ObservableList<SuatChieu> suatChieuList = FXCollections.observableArrayList();
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
-    
+
+    @FXML
+    private TableView<SuatChieuVM> tblSuatChieu;
+    @FXML
+    private TableColumn<SuatChieuVM, ImageView> colPoster;
+    @FXML
+    private TableColumn<SuatChieuVM, String> colPhim, colPhong, colGio, colTrangThai;
+    @FXML
+    private TableColumn<SuatChieuVM, BigDecimal> colGia;
+    @FXML
+    private TableColumn<SuatChieuVM, Void> colHanhDong;
+    @FXML
+    private Pagination paginationSuatChieu;
+
+    private static final int PAGE_SIZE = 12;
+
+    private LocalDate ngay = LocalDate.now();
+
+    private java.sql.Date sqlDate(LocalDate d) {
+        return java.sql.Date.valueOf(d);
+    }
+
     @FXML
     private void initialize() {
-        setupTableColumns();
-        loadComboBoxData();
-        setupEventHandlers();
-        dpLichChieu.setValue(LocalDate.now());
-        loadDanhSachSuatChieu();
-    }
-    
-    private void setupTableColumns() {
-        colMaSuat.setCellValueFactory(cellData -> cellData.getValue().maSuatChieuProperty().asObject());
-        colTenPhimSC.setCellValueFactory(cellData -> cellData.getValue().tenPhimProperty());
-        colPhongChieu.setCellValueFactory(cellData -> cellData.getValue().tenPhongProperty());
-        colDinhDang.setCellValueFactory(cellData -> cellData.getValue().dinhDangProperty());
-        colTrangThaiSC.setCellValueFactory(cellData -> cellData.getValue().trangThaiProperty());
-        
-        // Format cột Ngày chiếu (Sử dụng SimpleStringProperty đã import)
-        colNgayChieu.setCellValueFactory(cellData -> {
-            LocalDateTime batDauLuc = cellData.getValue().getBatDauLuc();
-            return new SimpleStringProperty(
-                batDauLuc != null ? batDauLuc.format(dateFormatter) : ""
-            );
-        });
-        
-        // Format cột Giờ chiếu (Sử dụng SimpleStringProperty đã import)
-        colGioChieu.setCellValueFactory(cellData -> {
-            LocalDateTime batDauLuc = cellData.getValue().getBatDauLuc();
-            return new SimpleStringProperty(
-                batDauLuc != null ? batDauLuc.format(timeFormatter) : ""
-            );
+
+        colPhim.setCellValueFactory(new PropertyValueFactory<>("tenPhim"));
+        colPhong.setCellValueFactory(new PropertyValueFactory<>("tenPhong"));
+        colGio.setCellValueFactory(new PropertyValueFactory<>("gio"));
+        colGia.setCellValueFactory(new PropertyValueFactory<>("gia"));
+
+        colGia.setCellFactory(tc -> new TableCell<>() {
+            @Override
+            protected void updateItem(BigDecimal v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%,.0f đ", v));
+            }
         });
 
-        // Thiết lập Cell Factory cho cột Giá
-        colGiaVe.setCellFactory(column -> new TableCell<SuatChieu, BigDecimal>() {
+        colTrangThai.setCellValueFactory(new PropertyValueFactory<>("trangThai"));
+
+        colPoster.setCellFactory(tc -> new TableCell<>() {
+            private final ImageView img = new ImageView();
+
+            {
+                img.setFitWidth(60);
+                img.setFitHeight(80);
+                img.setPreserveRatio(true);
+            }
+
             @Override
-            protected void updateItem(BigDecimal item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    // Định dạng tiền tệ VND
-                    setText(String.format("%,.0f VNĐ", item));
+            protected void updateItem(ImageView ignore, boolean empty) {
+                super.updateItem(ignore, empty);
+                if (empty) {
+                    setGraphic(null);
+                    return;
                 }
+                SuatChieuVM vm = getTableView().getItems().get(getIndex());
+                img.setImage(loadPoster(vm.getPosterUrl()));
+                setGraphic(img);
             }
         });
-    }
-    
-    private void loadComboBoxData() {
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ten_phim FROM phim ORDER BY ten_phim");
-             ResultSet rs = ps.executeQuery()) {
-            
-            ObservableList<String> phimList = FXCollections.observableArrayList("Tất cả phim");
-            while (rs.next()) {
-                phimList.add(rs.getString("ten_phim"));
+
+        colHanhDong.setCellFactory(col -> new TableCell<>() {
+            private final Button btn = new Button("Bán vé");
+
+            {
+                btn.setStyle("-fx-background-color:#2563eb; -fx-text-fill:white; -fx-font-weight:bold;");
+                btn.setOnAction(e -> {
+                    SuatChieuVM vm = getTableView().getItems().get(getIndex());
+                    if (vm != null) {
+                        try {
+                            openSeatDialog(vm.getMaSuatChieu(), vm.getTenPhim(), vm.getTenPhong(), vm.getGio());
+                        } catch (SQLException ex) {
+                            showError("Lỗi tải ghế", ex.getMessage());
+                        }
+                    }
+                });
             }
-            cbPhimFilter.setItems(phimList);
-            cbPhimFilter.getSelectionModel().selectFirst();
-            
-        } catch (SQLException e) {
-            showError("Lỗi tải danh sách phim", e.getMessage());
-        }
-    }
-    
-    private void setupEventHandlers() {
-        btnThemSuatChieu.setOnAction(e -> showThemSuaSuatChieuDialog(null));
-        btnSuaSuatChieu.setOnAction(e -> {
-            SuatChieu selected = tblSuatChieu.getSelectionModel().getSelectedItem();
-            if (selected == null) {
-                showAlert(Alert.AlertType.WARNING, "Vui lòng chọn suất chiếu cần sửa");
-                return;
+
+            @Override
+            protected void updateItem(Void v, boolean empty) {
+                super.updateItem(v, empty);
+                setGraphic(empty ? null : btn);
             }
-            showThemSuaSuatChieuDialog(selected); 
         });
-        btnXoaSuatChieu.setOnAction(e -> xoaSuatChieu());
-        
-        dpLichChieu.valueProperty().addListener((obs, oldV, newV) -> loadDanhSachSuatChieu());
-        cbPhimFilter.valueProperty().addListener((obs, oldV, newV) -> loadDanhSachSuatChieu());
+
+        paginationSuatChieu.setPageFactory(this::loadPage);
+        paginationSuatChieu.setMaxPageIndicatorCount(10);
+
+        refresh();
     }
-    
-    // Hàm tải dữ liệu chính
-    private void loadDanhSachSuatChieu() {
-        LocalDate ngayChieu = dpLichChieu.getValue();
-        String phimFilter = cbPhimFilter.getValue();
-        
-        // SQL query sử dụng cú pháp multi-line cho dễ đọc (yêu cầu Java 15+)
-        StringBuilder sql = new StringBuilder("""
-            SELECT sc.ma_suat_chieu, p.ma_phim, p.ten_phim, ph.ma_phong, ph.ten_phong, 
-                   sc.bat_dau_luc, dd.ten_dinh_dang, sc.gia_co_ban,
-                   CASE 
-                       WHEN DATE_ADD(sc.bat_dau_luc, INTERVAL p.thoi_luong_phut MINUTE) < NOW() THEN 'ĐÃ CHIẾU'
-                       WHEN sc.bat_dau_luc > NOW() THEN 'SẮP CHIẾU'
-                       ELSE 'ĐANG CHIẾU'
-                   END as trang_thai
+
+    private void refresh() {
+        int total = countSuatChieu();
+        int pages = Math.max(1, (int) Math.ceil(total / (double) PAGE_SIZE));
+        paginationSuatChieu.setPageCount(pages);
+        paginationSuatChieu.setCurrentPageIndex(0);
+    }
+// ======================= HÀM GỌI TỪ FILE KHÁC =======================
+
+    public void loadSuatChieuTable() {
+        refresh();  // reset lại số trang, load lại dữ liệu
+        paginationSuatChieu.setCurrentPageIndex(0); // quay về trang đầu
+        loadPage(0); // load lại trang 0 để TableView hiển thị dữ liệu mới
+    }
+
+    private int countSuatChieu() {
+
+        final String sql = """
+            SELECT COUNT(*)
             FROM suat_chieu sc
             JOIN phim p ON sc.ma_phim = p.ma_phim
             JOIN phong ph ON sc.ma_phong = ph.ma_phong
-            LEFT JOIN dinh_dang dd ON sc.ma_dinh_dang = dd.ma_dinh_dang
-            WHERE 1=1
-        """);
-        
-        if (ngayChieu != null) {
-            sql.append(" AND DATE(sc.bat_dau_luc) = ?");
-        }
-        
-        if (phimFilter != null && !phimFilter.isEmpty() && !phimFilter.equals("Tất cả phim")) {
-            sql.append(" AND p.ten_phim = ?");
-        }
-        
-        sql.append(" ORDER BY sc.bat_dau_luc ASC");
-        
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            
-            int paramIndex = 1;
-            if (ngayChieu != null) {
-                ps.setDate(paramIndex++, java.sql.Date.valueOf(ngayChieu));
-            }
-            
-            if (phimFilter != null && !phimFilter.isEmpty() && !phimFilter.equals("Tất cả phim")) {
-                ps.setString(paramIndex++, phimFilter);
-            }
-            
+            WHERE DATE(sc.bat_dau_luc) = ?
+        """;
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setDate(1, sqlDate(ngay));
             ResultSet rs = ps.executeQuery();
-            suatChieuList.clear();
-            while (rs.next()) {
-                SuatChieu sc = new SuatChieu(
-                    rs.getLong("ma_suat_chieu"),
-                    rs.getString("ten_phim"),
-                    rs.getString("ten_phong"),
-                    rs.getTimestamp("bat_dau_luc").toLocalDateTime(),
-                    rs.getString("ten_dinh_dang"),
-                    rs.getBigDecimal("gia_co_ban"),
-                    rs.getString("trang_thai"),
-                    rs.getLong("ma_phim"), 
-                    rs.getInt("ma_phong")
-                );
-                suatChieuList.add(sc);
-            }
-            tblSuatChieu.setItems(suatChieuList);
-            
-        } catch (SQLException e) {
-            showError("Lỗi tải suất chiếu", e.getMessage());
+            return rs.next() ? rs.getInt(1) : 0;
+
+        } catch (Exception e) {
+            return 0;
         }
     }
-    
-    // Hàm public được Controller Dialog gọi để tải lại dữ liệu
-    public void loadSuatChieuTable() {
-        loadDanhSachSuatChieu(); 
-    }
-    
-    // Hàm mở Dialog Thêm/Sửa
-    private void showThemSuaSuatChieuDialog(SuatChieu suatChieuToEdit) {
+
+    private Image loadPoster(String url) {
         try {
-            // Đảm bảo đường dẫn FXML phải chính xác!
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/models/ThemSuaSuatChieuDialog.fxml"));
-            Parent root = loader.load();
-            
-            ThemSuasuat_chieuController controller = loader.getController();
-
-            Stage dialogStage = new Stage();
-            dialogStage.setTitle(suatChieuToEdit == null ? "Thêm Suất Chiếu Mới" : "Sửa Suất Chiếu: " + suatChieuToEdit.getMaSuatChieu());
-            dialogStage.initModality(Modality.APPLICATION_MODAL);
-            
-            controller.setDialogStage(dialogStage);
-            controller.setParentController(this);
-            
-            if (suatChieuToEdit != null) {
-                controller.setSuatChieuToEdit(suatChieuToEdit);
-            }
-
-            Scene scene = new Scene(root);
-            dialogStage.setScene(scene);
-            dialogStage.showAndWait();
-            
+            return (url == null || url.isBlank())
+                    ? new Image(Objects.requireNonNull(getClass().getResource(
+                            "/javafx/scene/control/skin/caspian/dialog-confirm.png")).toExternalForm())
+                    : new Image(url, true);
         } catch (Exception e) {
-            showError("Lỗi Mở Cửa Sổ", "Không thể tải ThemSuaSuatChieuDialog.fxml. Lỗi: " + e.getMessage());
+            return new Image(Objects.requireNonNull(getClass().getResource(
+                    "/javafx/scene/control/skin/caspian/dialog-confirm.png")).toExternalForm());
+        }
+    }
+
+    private javafx.scene.Node loadPage(int pageIndex) {
+
+        ObservableList<SuatChieuVM> data = FXCollections.observableArrayList();
+
+        final String sql = """
+            SELECT sc.ma_suat_chieu, p.ten_phim, ph.ten_phong,
+                   DATE_FORMAT(sc.bat_dau_luc,'%H:%i') AS gio,
+                   sc.gia_co_ban, p.poster_url, sc.bat_dau_luc,
+                   (SELECT COUNT(*) FROM ve v WHERE v.ma_suat_chieu = sc.ma_suat_chieu AND v.trang_thai = 'SAN_SANG') AS con_ve
+            FROM suat_chieu sc
+            JOIN phim p ON sc.ma_phim = p.ma_phim
+            JOIN phong ph ON sc.ma_phong = ph.ma_phong
+            WHERE DATE(sc.bat_dau_luc) = ?
+            ORDER BY sc.bat_dau_luc
+            LIMIT ? OFFSET ?
+        """;
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setDate(1, sqlDate(ngay));
+            ps.setInt(2, PAGE_SIZE);
+            ps.setInt(3, pageIndex * PAGE_SIZE);
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+
+                Timestamp bd = rs.getTimestamp("bat_dau_luc");
+                int conVe = rs.getInt("con_ve");
+
+                String trangThai = getTrangThai(bd);
+                if (conVe == 0) {
+                    trangThai = "HẾT VÉ";
+                }
+
+                data.add(new SuatChieuVM(
+                        rs.getInt("ma_suat_chieu"),
+                        rs.getString("ten_phim"),
+                        rs.getString("ten_phong"),
+                        rs.getString("gio"),
+                        rs.getBigDecimal("gia_co_ban"),
+                        trangThai,
+                        rs.getString("poster_url")
+                ));
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
+
+        tblSuatChieu.setItems(data);
+        return tblSuatChieu;
     }
-    
-    // Logic Xóa Suất Chiếu
-    private void xoaSuatChieu() {
-        SuatChieu selected = tblSuatChieu.getSelectionModel().getSelectedItem();
-        if (selected == null) {
-            showAlert(Alert.AlertType.WARNING, "Vui lòng chọn suất chiếu cần xóa");
-            return;
+
+    private String getTrangThai(Timestamp batDau) {
+        long minutes = (batDau.getTime() - System.currentTimeMillis()) / 60000;
+        if (minutes > 30) {
+            return "Sắp chiếu";
         }
-        
-        // Kiểm tra suất chiếu đã chiếu
-        if (selected.getTrangThai().equals("ĐÃ CHIẾU")) {
-             showAlert(Alert.AlertType.WARNING, "Không thể xóa suất chiếu đã chiếu.");
-             return;
+        if (minutes >= -120) {
+            return "Đang chiếu";
         }
-        
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Xác nhận xóa");
-        confirm.setHeaderText("Xóa suất chiếu: " + selected.getMaSuatChieu() + " (" + selected.getTenPhim() + ")");
-        confirm.setContentText("Bạn có chắc chắn muốn xóa suất chiếu này?");
-        
-        if (confirm.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            String sql = "DELETE FROM suat_chieu WHERE ma_suat_chieu = ?";
-            try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                
-                ps.setLong(1, selected.getMaSuatChieu());
-                int rowsAffected = ps.executeUpdate();
-                
-                if (rowsAffected > 0) {
-                    showAlert(Alert.AlertType.INFORMATION, "Xóa suất chiếu thành công!");
-                    loadDanhSachSuatChieu(); // Reload danh sách
-                } else {
-                    showAlert(Alert.AlertType.ERROR, "Không tìm thấy hoặc không thể xóa suất chiếu.");
-                }
-            } catch (SQLException e) {
-                 showError("Lỗi Xóa CSDL", "Không thể xóa suất chiếu. Chi tiết: " + e.getMessage());
+        return "Đã chiếu";
+    }
+
+    // ======================== BÁN VÉ =========================
+    private void openSeatDialog(int maSC, String tenPhim, String tenPhong, String gio) throws SQLException {
+
+        Stage stage = new Stage();
+
+        VBox root = new VBox(10);
+        root.setStyle("-fx-padding:14;");
+
+        Label lbl = new Label("Suất: " + tenPhim + " - " + tenPhong + " (" + gio + ")");
+        Label hint = new Label("Xanh lá = trống, Xanh dương = đã chọn");
+
+        TilePane tile = new TilePane(5, 5);
+        tile.setPrefColumns(10);
+
+        BigDecimal[] tong = {BigDecimal.ZERO};
+        List<Integer> selected = new ArrayList<>();
+
+        final String sql = """
+            SELECT g.ma_ghe, g.hang_ghe, g.so_ghe, v.gia_ban
+            FROM ve v
+            JOIN ghe g ON v.ma_ghe = g.ma_ghe
+            WHERE v.ma_suat_chieu = ? AND v.trang_thai = 'SAN_SANG'
+            ORDER BY g.hang_ghe, g.so_ghe
+        """;
+
+        try (Connection c = DBConnection.getConnection(); PreparedStatement ps = c.prepareStatement(sql)) {
+
+            ps.setInt(1, maSC);
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+
+                int maGhe = rs.getInt("ma_ghe");
+                String label = rs.getString("hang_ghe") + rs.getInt("so_ghe");
+                BigDecimal gia = rs.getBigDecimal("gia_ban");
+
+                Button b = new Button(label);
+                b.setPrefSize(40, 40);
+                b.setStyle("-fx-background-color:#16a34a; -fx-text-fill:white; -fx-font-weight:bold;");
+
+                b.setOnAction(e -> {
+
+                    if (selected.contains(maGhe)) {
+                        selected.remove((Integer) maGhe);
+                        b.setStyle("-fx-background-color:#16a34a; -fx-text-fill:white;");
+                        tong[0] = tong[0].subtract(gia);
+                    } else {
+                        selected.add(maGhe);
+                        b.setStyle("-fx-background-color:#2563eb; -fx-text-fill:white;");
+                        tong[0] = tong[0].add(gia);
+                    }
+                });
+
+                tile.getChildren().add(b);
             }
         }
+
+        Button ok = new Button("Xác nhận bán vé");
+        ok.setStyle("-fx-background-color:#2563eb; -fx-text-fill:white; -fx-font-weight:bold;");
+        ok.setOnAction(e -> {
+            if (selected.isEmpty()) {
+                showWarn("Chọn ít nhất 1 ghế!");
+                return;
+            }
+            try {
+                commitTickets(maSC, selected, tong[0]);
+                stage.close();
+            } catch (Exception ex) {
+                showError("Lỗi bán vé", ex.getMessage());
+            }
+        });
+
+        root.getChildren().addAll(lbl, hint, tile, ok);
+        stage.setScene(new Scene(root, 500, 450));
+        stage.show();
     }
-    
-    private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    private void commitTickets(int maSC, List<Integer> seats, BigDecimal tongTien) throws SQLException {
+
+        try (Connection c = DBConnection.getConnection()) {
+
+            c.setAutoCommit(false);
+
+            int maDon;
+
+            final String sqlDon = """
+                INSERT INTO don_hang(kenh,trang_thai,tong_tien)
+                VALUES('TRUC_TIEP','DA_THANH_TOAN',?)
+            """;
+
+            try (PreparedStatement ps = c.prepareStatement(sqlDon, Statement.RETURN_GENERATED_KEYS)) {
+
+                ps.setBigDecimal(1, tongTien);
+                ps.executeUpdate();
+
+                ResultSet rs = ps.getGeneratedKeys();
+                if (!rs.next()) {
+                    throw new SQLException("Không thể tạo đơn hàng!");
+                }
+                maDon = rs.getInt(1);
+            }
+
+            final String sqlVe = """
+                UPDATE ve
+                SET trang_thai='DA_BAN', ban_luc=NOW(), ma_don_hang=?
+                WHERE ma_suat_chieu=? AND ma_ghe=? AND trang_thai='SAN_SANG'
+            """;
+
+            try (PreparedStatement ps = c.prepareStatement(sqlVe)) {
+
+                for (int ghe : seats) {
+                    ps.setInt(1, maDon);
+                    ps.setInt(2, maSC);
+                    ps.setInt(3, ghe);
+                    ps.addBatch();
+                }
+
+                ps.executeBatch();
+            }
+
+            c.commit();
+
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setContentText("Bán " + seats.size() + " vé thành công!\nTổng tiền: " + tongTien);
+            a.show();
+        }
     }
-    
-    private void showAlert(Alert.AlertType type, String message) {
-        Alert alert = new Alert(type);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+
+    private void showError(String h, String m) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setHeaderText(h);
+        a.setContentText(m);
+        a.show();
+    }
+
+    private void showWarn(String m) {
+        new Alert(Alert.AlertType.WARNING, m).show();
+    }
+
+    // ===================== VIEWMODEL =======================
+    public static class SuatChieuVM {
+
+        private final IntegerProperty maSuatChieu = new SimpleIntegerProperty();
+        private final StringProperty tenPhim = new SimpleStringProperty();
+        private final StringProperty tenPhong = new SimpleStringProperty();
+        private final StringProperty gio = new SimpleStringProperty();
+        private final ObjectProperty<BigDecimal> gia = new SimpleObjectProperty<>();
+        private final StringProperty trangThai = new SimpleStringProperty();
+        private final StringProperty posterUrl = new SimpleStringProperty();
+
+        public SuatChieuVM(int ma, String phim, String phong,
+                String gio, BigDecimal gia,
+                String trangThai, String poster) {
+
+            this.maSuatChieu.set(ma);
+            this.tenPhim.set(phim);
+            this.tenPhong.set(phong);
+            this.gio.set(gio);
+            this.gia.set(gia);
+            this.trangThai.set(trangThai);
+            this.posterUrl.set(poster);
+        }
+
+        public int getMaSuatChieu() {
+            return maSuatChieu.get();
+        }
+
+        public String getPosterUrl() {
+            return posterUrl.get();
+        }
+
+        public String getTenPhim() {
+            return tenPhim.get();
+        }
+
+        public String getTenPhong() {
+            return tenPhong.get();
+        }
+
+        public String getGio() {
+            return gio.get();
+        }
+
+        public String getTrangThai() {
+            return trangThai.get();
+        }
+
+        public BigDecimal getGia() {
+            return gia.get();
+        }
     }
 }

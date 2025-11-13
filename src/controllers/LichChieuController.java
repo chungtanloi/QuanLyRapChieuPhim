@@ -30,16 +30,13 @@ import java.time.temporal.WeekFields;
 import java.util.*;
 
 public class LichChieuController {
-    
-    // --- FXML TỪ LỊCH CHIẾU CHÍNH (LichChieu.fxml) ---
+
     @FXML private Button btnThemLichChieu, btnXemTuanTruoc, btnXemHomNay, btnXemTuanSau;
     @FXML private ComboBox<String> cbRapLichChieu, cbPhongLichChieu;
-    @FXML private Label lblTuanHienTai, lblDateMonday, lblDateTuesday, lblDateWednesday, 
-                            lblDateThursday, lblDateFriday, lblDateSaturday, lblDateSunday;
-    @FXML private VBox containerLichChieu; // Vùng chứa lịch biểu
-    
-    // --- FXML TỪ DIALOG THÊM LỊCH CHIẾU (ThemLichChieuDialog.fxml) ---
-    // Các thuộc tính này được liên kết khi dialog được load
+    @FXML private Label lblTuanHienTai, lblDateMonday, lblDateTuesday, lblDateWednesday,
+            lblDateThursday, lblDateFriday, lblDateSaturday, lblDateSunday;
+    @FXML private VBox containerLichChieu;
+
     @FXML private ComboBox<String> cbPhim;
     @FXML private ComboBox<String> cbPhong;
     @FXML private ComboBox<String> cbDinhDang;
@@ -48,34 +45,46 @@ public class LichChieuController {
     @FXML private Label lblThoiGianKetThuc;
     @FXML private Label lblXungDot;
     @FXML private Button btnLuu;
-    @FXML private Button btnHuy; // Thêm nút hủy cho dialog
-    
+    @FXML private Button btnHuy;
 
-    // --- Biến nội bộ ---
     private LocalDate currentWeekStart;
     private ObservableList<LichChieu> lichChieuList = FXCollections.observableArrayList();
     private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
     private Map<String, List<LichChieu>> lichChieuTheoPhong = new HashMap<>();
-    private Stage dialogStage; // Stage cho cửa sổ dialog mới
-    private String selectedPhimId; // Lưu mã phim đã chọn (key)
-    private Map<String, Integer> phimMap = new HashMap<>(); // Dùng chung để lưu Mã Phim
-
-    
-    // ====================================================================
-    // 1. INITIALIZE VÀ SETUP
-    // ====================================================================
+    private Stage dialogStage;
+    private String selectedPhimId;
+    private Map<String, Integer> phimMap = new HashMap<>();
 
     @FXML
     private void initialize() {
-        // Lấy ngày bắt đầu tuần (Thứ Hai) của tuần hiện tại
         currentWeekStart = getStartOfWeek(LocalDate.now());
-        
-        loadComboBoxData(); // Tải Rạp/Phòng cho ComboBox chính
+
+        setupComboBox();
         setupEventHandlers();
-        updateWeekDisplay(); // <--- FIX LỖI HIỂN THỊ NGÀY
-        loadLichChieuTuan(); // Tải và vẽ lịch lần đầu
+        updateWeekDisplay();
+        loadLichChieuTuan();
     }
-    
+
+    private void setupComboBox() {
+        // ❗ Vì không dùng bảng RAP → ComboBox Rạp chỉ có 1 lựa chọn
+        cbRapLichChieu.setItems(FXCollections.observableArrayList("Tất cả"));
+        cbRapLichChieu.getSelectionModel().selectFirst();
+
+        // Load danh sách phòng
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT ten_phong FROM phong ORDER BY ten_phong");
+             ResultSet rs = ps.executeQuery()) {
+
+            ObservableList<String> phongList = FXCollections.observableArrayList("Tất cả");
+            while (rs.next()) phongList.add(rs.getString("ten_phong"));
+            cbPhongLichChieu.setItems(phongList);
+            cbPhongLichChieu.getSelectionModel().selectFirst();
+
+        } catch (Exception e) {
+            showError("Lỗi phòng", e.getMessage());
+        }
+    }
+
     private void setupEventHandlers() {
         btnThemLichChieu.setOnAction(e -> showThemLichChieuDialog());
         btnXemTuanTruoc.setOnAction(e -> {
@@ -93,65 +102,22 @@ public class LichChieuController {
             updateWeekDisplay();
             loadLichChieuTuan();
         });
-        
-        // Listener cho ComboBox Lịch Chiếu chính
-        cbRapLichChieu.valueProperty().addListener((obs, oldVal, newVal) -> loadLichChieuTuan());
+
         cbPhongLichChieu.valueProperty().addListener((obs, oldVal, newVal) -> loadLichChieuTuan());
     }
-    
-    // Lấy dữ liệu cho ComboBox Rạp và Phòng trên giao diện chính (Sử dụng JOIN RAP)
-    private void loadComboBoxData() {
-        // Load danh sách rạp
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ten_rap FROM rap ORDER BY ten_rap");
-             ResultSet rs = ps.executeQuery()) {
-            
-            ObservableList<String> rapList = FXCollections.observableArrayList();
-            rapList.add("Chọn rạp"); // Tùy chọn mặc định
-            while (rs.next()) {
-                rapList.add(rs.getString("ten_rap"));
-            }
-            cbRapLichChieu.setItems(rapList);
-            cbRapLichChieu.getSelectionModel().selectFirst();
-            
-        } catch (SQLException e) {
-            showError("Lỗi tải dữ liệu Rạp", "Lỗi CSDL khi tải danh sách Rạp. Vui lòng kiểm tra lại Schema SQL.");
-            e.printStackTrace();
-        }
-        
-        // Load danh sách phòng
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ten_phong FROM phong ORDER BY ten_phong");
-             ResultSet rs = ps.executeQuery()) {
-            
-            ObservableList<String> phongList = FXCollections.observableArrayList();
-            phongList.add("Chọn phòng"); // Tùy chọn mặc định
-            while (rs.next()) {
-                phongList.add(rs.getString("ten_phong"));
-            }
-            cbPhongLichChieu.setItems(phongList);
-            cbPhongLichChieu.getSelectionModel().selectFirst();
-            
-        } catch (SQLException e) {
-            showError("Lỗi tải dữ liệu Phòng", "Lỗi CSDL khi tải danh sách Phòng.");
-            e.printStackTrace();
-        }
-    }
-    
-    // Tính toán ngày bắt đầu tuần (Thứ Hai)
+
     private LocalDate getStartOfWeek(LocalDate date) {
-        // Tìm ngày Thứ Hai của tuần hiện tại (hoặc tuần của ngày đó)
         return date.with(TemporalAdjusters.previousOrSame(
-            WeekFields.of(Locale.getDefault()).getFirstDayOfWeek()
+                WeekFields.of(Locale.getDefault()).getFirstDayOfWeek()
         ));
     }
-    
-    // Cập nhật nhãn ngày tháng trên Header 
+
     private void updateWeekDisplay() {
         LocalDate monday = currentWeekStart;
-        
-        lblTuanHienTai.setText("Tuần: " + monday.format(dateFormatter) + " - " + monday.plusDays(6).format(dateFormatter));
-        
+
+        lblTuanHienTai.setText("Tuần: " + monday.format(dateFormatter)
+                + " - " + monday.plusDays(6).format(dateFormatter));
+
         lblDateMonday.setText("Thứ 2\n" + monday.format(dateFormatter));
         lblDateTuesday.setText("Thứ 3\n" + monday.plusDays(1).format(dateFormatter));
         lblDateWednesday.setText("Thứ 4\n" + monday.plusDays(2).format(dateFormatter));
@@ -161,486 +127,368 @@ public class LichChieuController {
         lblDateSunday.setText("Chủ nhật\n" + monday.plusDays(6).format(dateFormatter));
     }
 
-    // ====================================================================
-    // 2. TẢI VÀ VẼ LỊCH CHIẾU (Đã cập nhật SQL JOIN RAP)
-    // ====================================================================
-    
+    // =====================================================================================
+    // 🔥  LOAD LỊCH CHIẾU TUẦN — KHÔNG CÓ RẠP
+    // =====================================================================================
     private void loadLichChieuTuan() {
-        LocalDate startOfWeek = currentWeekStart;
-        LocalDate endOfWeek = startOfWeek.plusDays(6);
-        
-        String rapFilter = cbRapLichChieu.getValue();
+        LocalDate start = currentWeekStart;
+        LocalDate end = start.plusDays(6);
         String phongFilter = cbPhongLichChieu.getValue();
-        
-        // Truy vấn SQL phức tạp để lấy thông tin Suất Chiếu, Phim, Phòng, Rạp
+
         StringBuilder sql = new StringBuilder("""
-            SELECT sc.ma_suat_chieu, pm.ten_phim, ph.ten_phong, 
-                   sc.bat_dau_luc, 
-                   DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) as ket_thuc_luc,
+            SELECT sc.ma_suat_chieu, pm.ten_phim, ph.ten_phong,
+                   sc.bat_dau_luc,
+                   DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) AS ket_thuc_luc,
                    dd.ten_dinh_dang,
-                   CASE 
+                   CASE
                        WHEN sc.bat_dau_luc > NOW() THEN 'SẮP CHIẾU'
-                       WHEN sc.bat_dau_luc <= NOW() AND DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) > NOW() THEN 'ĐANG CHIẾU'
+                       WHEN sc.bat_dau_luc <= NOW()
+                         AND DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) > NOW()
+                           THEN 'ĐANG CHIẾU'
                        ELSE 'ĐÃ CHIẾU'
-                   END as trang_thai
+                   END AS trang_thai
             FROM suat_chieu sc
             JOIN phim pm ON sc.ma_phim = pm.ma_phim
             JOIN phong ph ON sc.ma_phong = ph.ma_phong
             LEFT JOIN dinh_dang dd ON sc.ma_dinh_dang = dd.ma_dinh_dang
-            LEFT JOIN rap r ON ph.ma_rap = r.ma_rap /* <--- JOIN BẢNG RAP MỚI */
             WHERE DATE(sc.bat_dau_luc) BETWEEN ? AND ?
         """);
-        
-        // Thêm điều kiện lọc theo Rạp
-        if (rapFilter != null && !rapFilter.isEmpty() && !rapFilter.equals("Chọn rạp")) {
-            sql.append(" AND r.ten_rap = ?");
-        }
-        
-        // Thêm điều kiện lọc theo Phòng
-        if (phongFilter != null && !phongFilter.isEmpty() && !phongFilter.equals("Chọn phòng")) {
-            sql.append(" AND ph.ten_phong = ?");
-        }
-        
-        sql.append(" ORDER BY ph.ten_phong, sc.bat_dau_luc");
-        
+
+        if (phongFilter != null && !phongFilter.equals("Tất cả"))
+            sql.append(" AND ph.ten_phong = ? ");
+
+        sql.append(" ORDER BY ph.ten_phong, sc.bat_dau_luc ");
+
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql.toString())) {
-            
-            int paramIndex = 1;
-            ps.setDate(paramIndex++, java.sql.Date.valueOf(startOfWeek));
-            ps.setDate(paramIndex++, java.sql.Date.valueOf(endOfWeek));
-            
-            if (rapFilter != null && !rapFilter.isEmpty() && !rapFilter.equals("Chọn rạp")) {
-                ps.setString(paramIndex++, rapFilter);
-            }
-            
-            if (phongFilter != null && !phongFilter.isEmpty() && !phongFilter.equals("Chọn phòng")) {
-                ps.setString(paramIndex++, phongFilter);
-            }
-            
+
+            int idx = 1;
+            ps.setDate(idx++, java.sql.Date.valueOf(start));
+            ps.setDate(idx++, java.sql.Date.valueOf(end));
+
+            if (phongFilter != null && !phongFilter.equals("Tất cả"))
+                ps.setString(idx++, phongFilter);
+
             ResultSet rs = ps.executeQuery();
             lichChieuList.clear();
             lichChieuTheoPhong.clear();
-            
+
             while (rs.next()) {
                 LichChieu item = new LichChieu(
-                    rs.getLong("ma_suat_chieu"),
-                    rs.getString("ten_phim"),
-                    rs.getString("ten_phong"),
-                    rs.getTimestamp("bat_dau_luc").toLocalDateTime(),
-                    rs.getTimestamp("ket_thuc_luc").toLocalDateTime(),
-                    rs.getString("ten_dinh_dang"),
-                    rs.getString("trang_thai")
+                        rs.getLong("ma_suat_chieu"),
+                        rs.getString("ten_phim"),
+                        rs.getString("ten_phong"),
+                        rs.getTimestamp("bat_dau_luc").toLocalDateTime(),
+                        rs.getTimestamp("ket_thuc_luc").toLocalDateTime(),
+                        rs.getString("ten_dinh_dang"),
+                        rs.getString("trang_thai")
                 );
                 lichChieuList.add(item);
-                
-                String phong = item.getTenPhong();
-                lichChieuTheoPhong.computeIfAbsent(phong, k -> new ArrayList<>()).add(item);
+
+                lichChieuTheoPhong
+                        .computeIfAbsent(item.getTenPhong(), k -> new ArrayList<>())
+                        .add(item);
             }
-            
+
             renderLichChieuCalendar();
-            
-        } catch (SQLException e) {
-            showError("Lỗi tải lịch chiếu", "Lỗi CSDL: " + e.getMessage());
-            e.printStackTrace();
+
+        } catch (Exception e) {
+            showError("Lỗi tải lịch", e.getMessage());
         }
     }
-    
-    // (Giữ nguyên các hàm renderLichChieuCalendar, createPhongRow, createDayCell, createSuatChieuButton, showSuatChieuDetail)
-    // ... CÁC HÀM NÀY GIỮ NGUYÊN NHƯ CODE HOÀN CHỈNH TRƯỚC ...
 
+    // ================= Render lịch lên giao diện ====================
     private void renderLichChieuCalendar() {
         containerLichChieu.getChildren().clear();
-        
-        List<String> sortedPhongs = new ArrayList<>(lichChieuTheoPhong.keySet());
-        Collections.sort(sortedPhongs);
 
-        for (String phong : sortedPhongs) {
-            HBox phongRow = createPhongRow(phong, lichChieuTheoPhong.get(phong));
-            containerLichChieu.getChildren().add(phongRow);
-        }
-        
-        if(sortedPhongs.isEmpty()){
-             Label lblEmpty = new Label("Không có suất chiếu nào được tìm thấy trong tuần này.");
-             lblEmpty.setStyle("-fx-text-fill: #9e9e9e; -fx-font-size: 14px; -fx-padding: 20px;");
-             containerLichChieu.getChildren().add(lblEmpty);
+        List<String> phongs = new ArrayList<>(lichChieuTheoPhong.keySet());
+        Collections.sort(phongs);
+
+        for (String phong : phongs)
+            containerLichChieu.getChildren().add(createPhongRow(phong, lichChieuTheoPhong.get(phong)));
+
+        if (phongs.isEmpty()) {
+            Label lbl = new Label("Không có suất chiếu trong tuần này.");
+            lbl.setStyle("-fx-text-fill:#888; -fx-padding:20;");
+            containerLichChieu.getChildren().add(lbl);
         }
     }
-    
-    private HBox createPhongRow(String tenPhong, List<LichChieu> suatChieus) {
-        HBox row = new HBox(0); 
+
+    private HBox createPhongRow(String tenPhong, List<LichChieu> list) {
+        HBox row = new HBox(0);
         row.setPrefHeight(80);
-        row.setPrefWidth(120 + 150 * 7); 
-        row.setStyle("-fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0;");
-        
-        // Ô tên phòng
+        row.setPrefWidth(120 + 150 * 7);
+        row.setStyle("-fx-border-color:#ddd; -fx-border-width:0 0 1 0;");
+
         VBox phongCell = new VBox();
         phongCell.setPrefWidth(120);
         phongCell.setAlignment(Pos.CENTER);
-        phongCell.setStyle("-fx-background-color: #f5f5f5; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 0;");
         phongCell.setPadding(new Insets(5));
-        
-        Label lblPhong = new Label(tenPhong);
-        lblPhong.setFont(Font.font("System", FontWeight.BOLD, 12));
-        lblPhong.setWrapText(true);
-        phongCell.getChildren().add(lblPhong);
-        
+        phongCell.setStyle("-fx-background-color:#f5f5f5; -fx-border-color:#ddd; -fx-border-width:0 1 0 0;");
+        phongCell.getChildren().add(new Label(tenPhong));
+
         row.getChildren().add(phongCell);
-        
-        // Tạo ô cho mỗi ngày trong tuần
+
         for (int i = 0; i < 7; i++) {
             LocalDate ngay = currentWeekStart.plusDays(i);
-            VBox dayCell = createDayCell(ngay, suatChieus);
-            dayCell.setPrefWidth(150.0); 
-            row.getChildren().add(dayCell);
+            row.getChildren().add(createDayCell(ngay, list));
         }
-        
+
         return row;
     }
-    
-    private VBox createDayCell(LocalDate ngay, List<LichChieu> suatChieus) {
-        VBox dayCell = new VBox(2);
-        dayCell.setStyle("-fx-background-color: #fafafa; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 0;");
-        dayCell.setPadding(new Insets(5));
-        
-        List<LichChieu> suatChieuHomNay = suatChieus.stream()
-            .filter(suat -> suat.getBatDauLuc().toLocalDate().equals(ngay))
-            .sorted((s1, s2) -> s1.getBatDauLuc().compareTo(s2.getBatDauLuc()))
-            .toList();
-        
-        if (suatChieuHomNay.isEmpty()) {
-            Label lblEmpty = new Label("—");
-            lblEmpty.setStyle("-fx-text-fill: #9e9e9e; -fx-font-size: 10px;");
-            dayCell.setAlignment(Pos.CENTER);
-            dayCell.getChildren().add(lblEmpty);
+
+    private VBox createDayCell(LocalDate ngay, List<LichChieu> list) {
+        VBox cell = new VBox(2);
+        cell.setPadding(new Insets(5));
+        cell.setStyle("-fx-border-color:#eee; -fx-background-color:#fafafa;");
+
+        List<LichChieu> today = list.stream()
+                .filter(s -> s.getBatDauLuc().toLocalDate().equals(ngay))
+                .sorted(Comparator.comparing(LichChieu::getBatDauLuc))
+                .toList();
+
+        if (today.isEmpty()) {
+            Label empty = new Label("—");
+            empty.setStyle("-fx-text-fill:#bbb;");
+            empty.setAlignment(Pos.CENTER);
+            cell.getChildren().add(empty);
         } else {
-            for (LichChieu suat : suatChieuHomNay) {
-                Button btnSuat = createSuatChieuButton(suat);
-                dayCell.getChildren().add(btnSuat);
-            }
+            for (LichChieu s : today)
+                cell.getChildren().add(createSuatButton(s));
         }
-        
-        return dayCell;
+
+        return cell;
     }
-    
-    private Button createSuatChieuButton(LichChieu suat) {
-        Button btn = new Button();
+
+    private Button createSuatButton(LichChieu s) {
+        Button btn = new Button(s.getBatDauLuc().toLocalTime().toString());
         btn.setMaxWidth(Double.MAX_VALUE);
-        btn.setPrefHeight(30);
-        btn.setStyle(String.format(
-            "-fx-background-color: %s; -fx-text-fill: white; -fx-font-size: 9px; -fx-border-radius: 3; -fx-background-radius: 3;",
-            suat.getMauSac()
-        ));
-        
-        String tooltipText = String.format(
-            "%s\n%s: %s - %s\nĐịnh dạng: %s\nTrạng thái: %s",
-            suat.getTenPhim(),
-            suat.getTenPhong(),
-            suat.getBatDauLuc().toLocalTime(),
-            suat.getKetThucLuc().toLocalTime(),
-            suat.getDinhDang(),
-            suat.getTrangThai()
-        );
-        
-        Tooltip tooltip = new Tooltip(tooltipText);
-        Tooltip.install(btn, tooltip);
-        
-        btn.setText(suat.getBatDauLuc().toLocalTime().toString());
-        btn.setOnAction(e -> showSuatChieuDetail(suat));
-        
+        btn.setStyle("-fx-background-color:" + s.getMauSac() +
+                "; -fx-text-fill:white; -fx-font-size:10; -fx-background-radius:3;");
+
+        btn.setOnAction(e -> showSuatChieuDetail(s));
         return btn;
     }
-    
-    private void showSuatChieuDetail(LichChieu suat) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Chi tiết suất chiếu");
-        alert.setHeaderText(suat.getTenPhim());
-        alert.setContentText(String.format(
-            "Phòng: %s\n" +
-            "Thời gian: %s - %s\n" +
-            "Định dạng: %s\n" +
-            "Trạng thái: %s\n" +
-            "Mã suất: %d",
-            suat.getTenPhong(),
-            suat.getBatDauLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")),
-            suat.getKetThucLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")),
-            suat.getDinhDang(),
-            suat.getTrangThai(),
-            suat.getMaSuatChieu()
-        ));
-        alert.showAndWait();
+
+    private void showSuatChieuDetail(LichChieu s) {
+        Alert a = new Alert(Alert.AlertType.INFORMATION);
+        a.setTitle("Chi tiết suất chiếu");
+        a.setHeaderText(s.getTenPhim());
+        a.setContentText(
+                "Phòng: " + s.getTenPhong() +
+                        "\nThời gian: " + s.getBatDauLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM")) +
+                        " - " + s.getKetThucLuc().format(DateTimeFormatter.ofPattern("HH:mm dd/MM")) +
+                        "\nĐịnh dạng: " + s.getDinhDang() +
+                        "\nTrạng thái: " + s.getTrangThai()
+        );
+        a.showAndWait();
     }
-    
-    // ... (Giữ nguyên các hàm cho DIALOG THÊM LỊCH CHIẾU)
-    
-    @FXML
+
+    // ================= THÊM SUẤT CHIẾU — GIỮ NGUYÊN ======================
     private void showThemLichChieuDialog() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/models/ThemLichChieuDialog.fxml"));
-            loader.setController(this); 
+            loader.setController(this);
             VBox page = loader.load();
 
             dialogStage = new Stage();
-            dialogStage.setTitle("Thêm Lịch Chiếu Mới");
+            dialogStage.setTitle("Thêm suất chiếu");
             dialogStage.initModality(Modality.WINDOW_MODAL);
-            
-            Stage parentStage = (Stage) btnThemLichChieu.getScene().getWindow();
-            dialogStage.initOwner(parentStage); 
-            
-            Scene scene = new Scene(page);
-            dialogStage.setScene(scene);
-            
+
+            Stage parent = (Stage) btnThemLichChieu.getScene().getWindow();
+            dialogStage.initOwner(parent);
+
+            dialogStage.setScene(new Scene(page));
             loadDialogComboBoxData();
             setupDialogListeners();
-            
             dialogStage.showAndWait();
-            
+
         } catch (Exception e) {
-            showError("Lỗi Mở Cửa Sổ", "Không thể tải ThemLichChieuDialog.fxml: " + e.getMessage());
-            e.printStackTrace();
+            showError("Lỗi mở dialog", e.getMessage());
         }
     }
-    
+
     private void loadDialogComboBoxData() {
-        // 1. Load Phim (Lấy tên phim và lưu Mã Phim vào map)
-        phimMap.clear(); 
+        phimMap.clear();
         ObservableList<String> phimList = FXCollections.observableArrayList();
+
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ma_phim, ten_phim, thoi_luong_phut FROM phim ORDER BY ten_phim");
-             ResultSet rs = ps.executeQuery()) {
-            
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT ma_phim, ten_phim FROM phim ORDER BY ten_phim")) {
+            ResultSet rs = ps.executeQuery();
             while (rs.next()) {
-                String tenPhim = rs.getString("ten_phim");
-                phimList.add(tenPhim);
-                phimMap.put(tenPhim, rs.getInt("ma_phim")); 
+                phimMap.put(rs.getString("ten_phim"), rs.getInt("ma_phim"));
+                phimList.add(rs.getString("ten_phim"));
             }
             cbPhim.setItems(phimList);
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        
-        cbPhim.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null) {
-                selectedPhimId = String.valueOf(phimMap.get(newVal)); 
-                updateKetThucLuc();
-                checkThoiGianXungDot();
-            }
-        });
 
-        // 2. Load Phòng (Copy từ ComboBox chính)
-        ObservableList<String> phongDialogList = FXCollections.observableArrayList(cbPhongLichChieu.getItems());
-        if(phongDialogList.contains("Chọn phòng")) {
-             phongDialogList.remove("Chọn phòng");
+        } catch (Exception e) {
+            showError("Lỗi phim", e.getMessage());
         }
-        cbPhong.setItems(phongDialogList);
-        
-        // 3. Load Định Dạng
-        ObservableList<String> dinhDangList = FXCollections.observableArrayList();
+
+        ObservableList<String> phongList = FXCollections.observableArrayList(cbPhongLichChieu.getItems());
+        phongList.remove("Tất cả");
+        cbPhong.setItems(phongList);
+
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT ten_dinh_dang FROM dinh_dang ORDER BY ten_dinh_dang");
-             ResultSet rs = ps.executeQuery()) {
-            
-            while (rs.next()) {
-                dinhDangList.add(rs.getString("ten_dinh_dang"));
-            }
-            cbDinhDang.setItems(dinhDangList);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private void setupDialogListeners() {
-        dpNgayChieu.valueProperty().addListener((obs, oldVal, newVal) -> checkThoiGianXungDot());
-        txtGioBatDau.textProperty().addListener((obs, oldVal, newVal) -> {
-            updateKetThucLuc();
-            checkThoiGianXungDot();
-        });
-        cbPhong.valueProperty().addListener((obs, oldVal, newVal) -> checkThoiGianXungDot());
-        
-        if (btnHuy != null) {
-            btnHuy.setOnAction(e -> handleCancelThemSuatChieu());
-        }
-        
-        btnLuu.setOnAction(e -> handleSaveLichChieu());
-    }
-    
-    private void updateKetThucLuc() {
-        // ... (Giữ nguyên logic tính thời gian kết thúc)
-        if (cbPhim.getValue() == null || txtGioBatDau.getText().isEmpty() || selectedPhimId == null) {
-            lblThoiGianKetThuc.setText("Thời gian kết thúc (Tự động):");
-            return;
-        }
-        
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement("SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
-            
-            ps.setString(1, selectedPhimId);
+             PreparedStatement ps = conn.prepareStatement("SELECT ten_dinh_dang FROM dinh_dang")) {
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                int thoiLuong = rs.getInt("thoi_luong_phut");
-                
-                LocalDate ngay = dpNgayChieu.getValue() != null ? dpNgayChieu.getValue() : LocalDate.now();
-                
-                LocalTime gio = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
-                
-                LocalDateTime ketThuc = LocalDateTime.of(ngay, gio).plusMinutes(thoiLuong);
-                
-                lblThoiGianKetThuc.setText("Thời gian kết thúc (Tự động): " + 
-                                           ketThuc.format(DateTimeFormatter.ofPattern("HH:mm dd/MM")));
-            }
-        } catch (SQLException e) {
-             lblThoiGianKetThuc.setText("Lỗi SQL khi lấy thời lượng phim.");
-             btnLuu.setDisable(true);
-        } catch (DateTimeParseException e) {
-            lblThoiGianKetThuc.setText("Lỗi định dạng giờ (HH:mm).");
-            btnLuu.setDisable(true);
+            ObservableList<String> list = FXCollections.observableArrayList();
+            while (rs.next()) list.add(rs.getString("ten_dinh_dang"));
+            cbDinhDang.setItems(list);
+        } catch (Exception e) {
+            showError("Lỗi định dạng", e.getMessage());
         }
     }
 
-    private void checkThoiGianXungDot() {
-        // ... (Giữ nguyên logic kiểm tra xung đột)
+    private void setupDialogListeners() {
+        dpNgayChieu.valueProperty().addListener((a, b, c) -> checkConflict());
+        txtGioBatDau.textProperty().addListener((a, b, c) -> {
+            updateKetThucLuc();
+            checkConflict();
+        });
+        cbPhong.valueProperty().addListener((a, b, c) -> checkConflict());
+
+        if (btnHuy != null)
+            btnHuy.setOnAction(e -> dialogStage.close());
+
+        btnLuu.setOnAction(e -> saveSuatChieu());
+    }
+
+    private void updateKetThucLuc() {
+        try {
+            if (cbPhim.getValue() == null || txtGioBatDau.getText().isBlank()) {
+                lblThoiGianKetThuc.setText("Thời gian kết thúc:");
+                return;
+            }
+
+            int maPhim = phimMap.get(cbPhim.getValue());
+            int dur = 0;
+
+            try (Connection conn = DBConnection.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(
+                         "SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
+                ps.setInt(1, maPhim);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) dur = rs.getInt(1);
+            }
+
+            LocalDate ngay = dpNgayChieu.getValue();
+            LocalTime gio = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
+
+            LocalDateTime ketThuc = LocalDateTime.of(ngay, gio).plusMinutes(dur);
+
+            lblThoiGianKetThuc.setText("Thời gian kết thúc: " +
+                    ketThuc.format(DateTimeFormatter.ofPattern("HH:mm dd/MM")));
+
+        } catch (Exception ignore) {}
+    }
+
+    private void checkConflict() {
         lblXungDot.setText("");
         btnLuu.setDisable(true);
-        
-        if (cbPhong.getValue() == null || dpNgayChieu.getValue() == null || 
-            txtGioBatDau.getText().isEmpty() || selectedPhimId == null || 
-            cbDinhDang.getValue() == null) {
-            lblXungDot.setText("Vui lòng điền đủ thông tin.");
-            lblXungDot.setStyle("-fx-text-fill: #9e9e9e;");
-            return;
-        }
-        
+
         try {
-            LocalTime gioBatDau = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
-            LocalDateTime batDauMoi = LocalDateTime.of(dpNgayChieu.getValue(), gioBatDau);
-            
-            int thoiLuong = 0;
-            // Lấy thời lượng phim để tính thời gian kết thúc
+            if (cbPhim.getValue() == null || cbPhong.getValue() == null ||
+                    dpNgayChieu.getValue() == null || txtGioBatDau.getText().isBlank()) {
+                return;
+            }
+
+            LocalTime gioBD = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
+            LocalDateTime batDauMoi = LocalDateTime.of(dpNgayChieu.getValue(), gioBD);
+
+            int dur = 0;
+            int maPhim = phimMap.get(cbPhim.getValue());
+
             try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement("SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
-                ps.setString(1, selectedPhimId);
+                 PreparedStatement ps = conn.prepareStatement(
+                         "SELECT thoi_luong_phut FROM phim WHERE ma_phim = ?")) {
+                ps.setInt(1, maPhim);
                 ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    thoiLuong = rs.getInt("thoi_luong_phut");
-                }
+                if (rs.next()) dur = rs.getInt(1);
             }
-            
-            if (thoiLuong == 0) {
-                 lblXungDot.setText("Lỗi: Phim không có thời lượng.");
-                 lblXungDot.setStyle("-fx-text-fill: red;");
-                 return;
-            }
-            
-            LocalDateTime ketThucMoi = batDauMoi.plusMinutes(thoiLuong);
-            String tenPhong = cbPhong.getValue();
-            
+
+            LocalDateTime ketThucMoi = batDauMoi.plusMinutes(dur);
+
             String sql = """
-                SELECT sc.ma_suat_chieu, pm.ten_phim, sc.bat_dau_luc,
-                       DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) as ket_thuc_luc
+                SELECT pm.ten_phim, sc.bat_dau_luc,
+                       DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE)
                 FROM suat_chieu sc
                 JOIN phong ph ON sc.ma_phong = ph.ma_phong
                 JOIN phim pm ON sc.ma_phim = pm.ma_phim
-                WHERE ph.ten_phong = ? 
+                WHERE ph.ten_phong = ?
                 AND sc.bat_dau_luc < ? AND DATE_ADD(sc.bat_dau_luc, INTERVAL pm.thoi_luong_phut MINUTE) > ?
             """;
-            
+
             try (Connection conn = DBConnection.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
-                
-                ps.setString(1, tenPhong);
+                ps.setString(1, cbPhong.getValue());
                 ps.setTimestamp(2, java.sql.Timestamp.valueOf(ketThucMoi));
                 ps.setTimestamp(3, java.sql.Timestamp.valueOf(batDauMoi));
-                
                 ResultSet rs = ps.executeQuery();
-                
+
                 if (rs.next()) {
-                    String tenPhimCu = rs.getString("ten_phim");
-                    LocalDateTime batDauCu = rs.getTimestamp("bat_dau_luc").toLocalDateTime();
-                    LocalDateTime ketThucCu = rs.getTimestamp("ket_thuc_luc").toLocalDateTime();
-                    
-                    lblXungDot.setText("LỖI: Xung đột với suất chiếu phim '" + tenPhimCu + 
-                                       "' lúc " + batDauCu.format(DateTimeFormatter.ofPattern("HH:mm")) + 
-                                       " đến " + ketThucCu.format(DateTimeFormatter.ofPattern("HH:mm")) + "!");
-                    lblXungDot.setStyle("-fx-text-fill: red;");
-                    btnLuu.setDisable(true);
+                    lblXungDot.setText("⚠ Xung đột với suất " + rs.getString(1));
+                    lblXungDot.setStyle("-fx-text-fill:red;");
                     return;
                 }
             }
-            
-            lblXungDot.setText("Thời gian hợp lệ.");
-            lblXungDot.setStyle("-fx-text-fill: green;");
-            btnLuu.setDisable(false); 
-            
+
+            lblXungDot.setText("✔ Thời gian hợp lệ");
+            lblXungDot.setStyle("-fx-text-fill:green;");
+            btnLuu.setDisable(false);
+
         } catch (Exception e) {
-            lblXungDot.setText("Lỗi kiểm tra xung đột: Định dạng giờ sai (HH:mm) hoặc lỗi CSDL.");
-            lblXungDot.setStyle("-fx-text-fill: red;");
-            btnLuu.setDisable(true);
-            e.printStackTrace();
+            lblXungDot.setText("Lỗi kiểm tra!");
+            lblXungDot.setStyle("-fx-text-fill:red;");
         }
     }
-    
-    private void handleSaveLichChieu() {
-        // ... (Giữ nguyên logic lưu lịch chiếu)
-        if (btnLuu.isDisable()) {
-            showError("Lỗi Lưu", "Vui lòng khắc phục lỗi xung đột hoặc điền đầy đủ thông tin hợp lệ.");
-            return;
-        }
-        
+
+    private void saveSuatChieu() {
         try {
-            int maPhong = getMaFromTen("phong", "ten_phong", cbPhong.getValue(), "ma_phong");
-            int maDinhDang = getMaFromTen("dinh_dang", "ten_dinh_dang", cbDinhDang.getValue(), "ma_dinh_dang");
-            
-            LocalTime gioBatDau = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
-            LocalDateTime batDauLuc = LocalDateTime.of(dpNgayChieu.getValue(), gioBatDau);
-            
-            String sql = "INSERT INTO suat_chieu (ma_phim, ma_phong, ma_dinh_dang, bat_dau_luc, gia_co_ban, trang_thai) VALUES (?, ?, ?, ?, ?, 'MO_BAN')";
+            int maPhim = phimMap.get(cbPhim.getValue());
+            int maPhong = getMaByName("phong", "ma_phong", "ten_phong", cbPhong.getValue());
+            int maDinhDang = getMaByName("dinh_dang", "ma_dinh_dang", "ten_dinh_dang", cbDinhDang.getValue());
+
+            LocalTime gioBD = LocalTime.parse(txtGioBatDau.getText(), DateTimeFormatter.ofPattern("HH:mm"));
+            LocalDateTime batDau = LocalDateTime.of(dpNgayChieu.getValue(), gioBD);
+
             try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                
-                ps.setString(1, selectedPhimId);
+                 PreparedStatement ps = conn.prepareStatement(
+                         "INSERT INTO suat_chieu(ma_phim, ma_phong, ma_dinh_dang, bat_dau_luc, gia_co_ban, trang_thai) VALUES(?,?,?,?,0,'MO_BAN')")) {
+                ps.setInt(1, maPhim);
                 ps.setInt(2, maPhong);
                 ps.setInt(3, maDinhDang);
-                ps.setTimestamp(4, java.sql.Timestamp.valueOf(batDauLuc));
-                
+                ps.setTimestamp(4, java.sql.Timestamp.valueOf(batDau));
                 ps.executeUpdate();
-                
-                Alert successAlert = new Alert(Alert.AlertType.INFORMATION, "Thêm lịch chiếu thành công!");
-                successAlert.showAndWait();
-                
-                handleCancelThemSuatChieu(); // Đóng dialog
-                loadLichChieuTuan(); // Tải lại lịch
             }
 
+            dialogStage.close();
+            loadLichChieuTuan();
+
+            Alert a = new Alert(Alert.AlertType.INFORMATION);
+            a.setContentText("Thêm suất chiếu thành công!");
+            a.show();
+
         } catch (Exception e) {
-            showError("Lỗi Lưu CSDL", "Không thể thêm suất chiếu: " + e.getMessage());
-            e.printStackTrace();
+            showError("Lỗi lưu", e.getMessage());
         }
     }
 
-    private int getMaFromTen(String tenBang, String tenCotTen, String ten, String tenCotMa) throws SQLException {
-        String sql = String.format("SELECT %s FROM %s WHERE %s = ?", tenCotMa, tenBang, tenCotTen);
+    private int getMaByName(String table, String maCol, String tenCol, String ten) throws Exception {
+        String sql = "SELECT " + maCol + " FROM " + table + " WHERE " + tenCol + "=?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, ten);
             ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getInt(tenCotMa);
-            return 0;
+            return rs.next() ? rs.getInt(1) : 0;
         }
     }
 
-    @FXML
-    private void handleCancelThemSuatChieu() {
-        if (dialogStage != null) {
-            dialogStage.close();
-        }
-    }
-    
-    private void showError(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private void showError(String h, String m) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setHeaderText(h);
+        a.setContentText(m);
+        a.show();
     }
 }
