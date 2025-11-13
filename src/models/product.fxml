@@ -12,8 +12,8 @@
             <children>
                 <Label text="🍿 QUẢN LÝ SẢN PHẨM (COMBO)" style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;" />
                 <Pane HBox.hgrow="ALWAYS" />
-                <Button text="➕ Thêm Combo" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;" />
-                <Button text="🔄 Làm mới" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-weight: bold;" />
+                <Button fx:id ="btnThemCombo" text="➕ Thêm Combo" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;" />
+                <Button fx:id="btnLamMoi" text="🔄 Làm mới" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-weight: bold;" />
             </children>
             <padding>
                 <Insets bottom="12" left="15" right="15" top="12" />
@@ -31,7 +31,7 @@
                         <HBox spacing="10" alignment="CENTER_LEFT">
                             <children>
                                 <TextField fx:id="txtTimCombo" promptText="Tìm combo..." prefWidth="250" />
-                                <Button text="🔍 Tìm" style="-fx-background-color: #6b7280; -fx-text-fill: white;" />
+                                <Button fx:id="btnTimKiem" text="🔍 Tìm" style="-fx-background-color: #6b7280; -fx-text-fill: white;" />
                                 <Pane HBox.hgrow="ALWAYS" />
                                 <Label text="Tổng: " style="-fx-font-weight: bold;" />
                                 <Label fx:id="lblTongCombo" text="0 combo" style="-fx-text-fill: #e63946; -fx-font-weight: bold;" />
@@ -88,8 +88,8 @@
 
                         <HBox spacing="10" alignment="CENTER_RIGHT">
                             <children>
-                                <Button text="❌ Hủy" style="-fx-background-color: #ef4444; -fx-text-fill: white;" />
-                                <Button text="💾 Lưu" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;" />
+                                <Button fx:id="btnHuy" text="❌ Hủy" style="-fx-background-color: #ef4444; -fx-text-fill: white;" />
+                                <Button fx:id="btnLuu" text="💾 Lưu" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;" />
                             </children>
                         </HBox>
                     </children>
