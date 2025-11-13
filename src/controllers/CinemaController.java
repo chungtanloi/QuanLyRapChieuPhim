@@ -10,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
 import java.sql.*;
 import java.util.Optional;
@@ -48,10 +49,8 @@ public class CinemaController {
         nameColumn.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getTenPhong()));
         seatsColumn.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().getSucChua())));
         
-        // Hiển thị "Không xác định" cho loại màn hình vì DB không có field này
         screenTypeColumn.setCellValueFactory(data -> new SimpleStringProperty("Chuẩn"));
         
-        // Chuyển đổi trạng thái từ ENUM sang tiếng Việt
         statusColumn.setCellValueFactory(data -> {
             String status = data.getValue().getTrangThai();
             String displayStatus = switch (status) {
@@ -63,20 +62,26 @@ public class CinemaController {
             return new SimpleStringProperty(displayStatus);
         });
         
-        // Cột thao tác với nút Sửa và Xóa
         actionsColumn.setCellFactory(col -> new TableCell<Cinema, String>() {
             private final Button editBtn = new Button("Sửa");
             private final Button deleteBtn = new Button("Xóa");
-            private final HBox container = new HBox(10, editBtn, deleteBtn);
+            private final Button detailBtn = new Button("Chi tiết");
+            private final HBox container = new HBox(8, editBtn, detailBtn, deleteBtn);
 
             {
                 container.setAlignment(Pos.CENTER);
-                editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 15;");
-                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 15;");
+                editBtn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12;");
+                detailBtn.setStyle("-fx-background-color: #2196F3; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12;");
+                deleteBtn.setStyle("-fx-background-color: #f44336; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 5 12;");
                 
                 editBtn.setOnAction(e -> {
                     Cinema cinema = getTableView().getItems().get(getIndex());
                     handleEdit(cinema);
+                });
+                
+                detailBtn.setOnAction(e -> {
+                    Cinema cinema = getTableView().getItems().get(getIndex());
+                    handleShowDetail(cinema);
                 });
                 
                 deleteBtn.setOnAction(e -> {
@@ -118,47 +123,24 @@ public class CinemaController {
         }
     }
 
+    /**
+     * Cập nhật thống kê sử dụng Stored Procedure
+     */
     private void updateStatistics() {
-        try (Connection conn = DBConnection.getConnection()) {
-            // Tổng số phòng
-            String totalQuery = "SELECT COUNT(*) as total FROM phong";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(totalQuery)) {
-                if (rs.next()) {
-                    totalTheatersLabel.setText(String.valueOf(rs.getInt("total")));
-                }
-            }
+        try (Connection conn = DBConnection.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL sp_thong_ke_phong()}")) {
             
-            // Đang hoạt động
-            String activeQuery = "SELECT COUNT(*) as active FROM phong WHERE trang_thai = 'HOAT_DONG'";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(activeQuery)) {
-                if (rs.next()) {
-                    activeTheatersLabel.setText(String.valueOf(rs.getInt("active")));
-                }
-            }
-            
-            // Đang bảo trì
-            String maintenanceQuery = "SELECT COUNT(*) as maintenance FROM phong WHERE trang_thai = 'BAO_TRI'";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(maintenanceQuery)) {
-                if (rs.next()) {
-                    maintenanceTheatersLabel.setText(String.valueOf(rs.getInt("maintenance")));
-                }
-            }
-            
-            // Tổng ghế ngồi
-            String seatsQuery = "SELECT SUM(suc_chua) as total_seats FROM phong";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(seatsQuery)) {
-                if (rs.next()) {
-                    int totalSeats = rs.getInt("total_seats");
-                    totalSeatsLabel.setText(String.valueOf(totalSeats));
-                }
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                totalTheatersLabel.setText(String.valueOf(rs.getInt("tong_phong")));
+                activeTheatersLabel.setText(String.valueOf(rs.getInt("dang_hoat_dong")));
+                maintenanceTheatersLabel.setText(String.valueOf(rs.getInt("dang_bao_tri")));
+                totalSeatsLabel.setText(String.valueOf(rs.getInt("tong_ghe")));
             }
             
         } catch (SQLException e) {
             e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể tải thống kê: " + e.getMessage());
         }
     }
 
@@ -199,7 +181,7 @@ public class CinemaController {
 
         Optional<Cinema> result = dialog.showAndWait();
         result.ifPresent(cinema -> {
-            if (cinema != null && insertCinema(cinema)) {
+            if (cinema != null && insertCinemaUsingProcedure(cinema)) {
                 loadCinemaData();
                 updateStatistics();
                 showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã thêm phòng chiếu mới!");
@@ -234,7 +216,7 @@ public class CinemaController {
 
         Optional<Cinema> result = dialog.showAndWait();
         result.ifPresent(updated -> {
-            if (updated != null && updateCinema(updated)) {
+            if (updated != null && updateCinemaUsingProcedure(updated)) {
                 loadCinemaData();
                 updateStatistics();
                 showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã cập nhật thông tin phòng chiếu!");
@@ -242,15 +224,128 @@ public class CinemaController {
         });
     }
 
+    /**
+     * Hiển thị chi tiết phòng sử dụng Stored Procedure
+     */
+    private void handleShowDetail(Cinema cinema) {
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Chi Tiết Phòng Chiếu");
+        dialog.setHeaderText("Thông tin chi tiết: " + cinema.getTenPhong());
+        
+        dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        
+        VBox content = new VBox(15);
+        content.setPadding(new Insets(20));
+        content.setStyle("-fx-background-color: #f5f5f5;");
+        
+        try (Connection conn = DBConnection.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL sp_chi_tiet_phong(?)}")) {
+            
+            stmt.setLong(1, cinema.getMaPhong());
+            
+            // Thông tin phòng
+            boolean hasResults = stmt.execute();
+            if (hasResults) {
+                ResultSet rsPhong = stmt.getResultSet();
+                if (rsPhong.next()) {
+                    Label infoLabel = new Label(
+                        "Mã phòng: " + rsPhong.getLong("ma_phong") + "\n" +
+                        "Tên phòng: " + rsPhong.getString("ten_phong") + "\n" +
+                        "Sức chứa: " + rsPhong.getInt("suc_chua") + "\n" +
+                        "Số ghế thực tế: " + rsPhong.getInt("so_ghe_thuc_te") + "\n" +
+                        "Trạng thái: " + translateStatus(rsPhong.getString("trang_thai")) + "\n" +
+                        "Tạo lúc: " + rsPhong.getTimestamp("tao_luc") + "\n" +
+                        "Cập nhật lúc: " + rsPhong.getTimestamp("cap_nhat_luc")
+                    );
+                    infoLabel.setStyle("-fx-font-size: 14px; -fx-padding: 10; -fx-background-color: white; -fx-background-radius: 5;");
+                    content.getChildren().add(infoLabel);
+                }
+                rsPhong.close();
+            }
+            
+            // Danh sách ghế
+            if (stmt.getMoreResults()) {
+                ResultSet rsGhe = stmt.getResultSet();
+                
+                TableView<SeatInfo> seatTable = new TableView<>();
+                seatTable.setPrefHeight(300);
+                
+                TableColumn<SeatInfo, String> rowCol = new TableColumn<>("Hàng");
+                rowCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().hangGhe));
+                rowCol.setPrefWidth(80);
+                
+                TableColumn<SeatInfo, String> seatCol = new TableColumn<>("Số ghế");
+                seatCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().soGhe)));
+                seatCol.setPrefWidth(80);
+                
+                TableColumn<SeatInfo, String> typeCol = new TableColumn<>("Loại ghế");
+                typeCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().loaiGhe));
+                typeCol.setPrefWidth(120);
+                
+                TableColumn<SeatInfo, String> ratioCol = new TableColumn<>("Hệ số giá");
+                ratioCol.setCellValueFactory(data -> new SimpleStringProperty(String.valueOf(data.getValue().heSoGia)));
+                ratioCol.setPrefWidth(100);
+                
+                seatTable.getColumns().addAll(rowCol, seatCol, typeCol, ratioCol);
+                
+                ObservableList<SeatInfo> seats = FXCollections.observableArrayList();
+                while (rsGhe.next()) {
+                    seats.add(new SeatInfo(
+                        rsGhe.getString("hang_ghe"),
+                        rsGhe.getInt("so_ghe"),
+                        rsGhe.getString("ten_loai_ghe"),
+                        rsGhe.getDouble("he_so_gia")
+                    ));
+                }
+                seatTable.setItems(seats);
+                
+                Label seatLabel = new Label("Danh sách ghế (" + seats.size() + " ghế):");
+                seatLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+                content.getChildren().addAll(seatLabel, seatTable);
+                
+                rsGhe.close();
+            }
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể tải chi tiết phòng: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        dialog.getDialogPane().setContent(content);
+        dialog.getDialogPane().setPrefWidth(500);
+        dialog.showAndWait();
+    }
+
     private void handleDelete(Cinema cinema) {
+        // Kiểm tra có thể xóa không bằng Function
+        try (Connection conn = DBConnection.getConnection();
+             CallableStatement stmt = conn.prepareCall("{? = CALL fn_kiem_tra_xoa_phong(?)}")) {
+            
+            stmt.registerOutParameter(1, Types.VARCHAR);
+            stmt.setLong(2, cinema.getMaPhong());
+            stmt.execute();
+            
+            String checkResult = stmt.getString(1);
+            
+            if (!checkResult.startsWith("CO_THE_XOA")) {
+                showAlert(Alert.AlertType.WARNING, "Cảnh báo", 
+                    "Không thể xóa phòng!\n" + checkResult.replace("_", " "));
+                return;
+            }
+            
+        } catch (SQLException e) {
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể kiểm tra: " + e.getMessage());
+            return;
+        }
+        
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xác nhận xóa");
         confirm.setHeaderText("Bạn có chắc muốn xóa phòng chiếu này?");
-        confirm.setContentText("Phòng: " + cinema.getTenPhong() + "\nLưu ý: Các suất chiếu và ghế liên quan sẽ bị xóa!");
+        confirm.setContentText("Phòng: " + cinema.getTenPhong() + "\nLưu ý: Các ghế liên quan sẽ bị xóa!");
 
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            if (deleteCinema(cinema.getMaPhong())) {
+            if (deleteCinemaUsingProcedure(cinema.getMaPhong())) {
                 loadCinemaData();
                 updateStatistics();
                 showAlert(Alert.AlertType.INFORMATION, "Thành công", "Đã xóa phòng chiếu!");
@@ -269,7 +364,7 @@ public class CinemaController {
         if (cinema != null) nameField.setText(cinema.getTenPhong());
 
         TextField seatsField = new TextField();
-        seatsField.setPromptText("Số ghế (VD: 100)");
+        seatsField.setPromptText("Số ghế (20-500)");
         if (cinema != null) seatsField.setText(String.valueOf(cinema.getSucChua()));
 
         ComboBox<String> statusCombo = new ComboBox<>();
@@ -317,29 +412,31 @@ public class CinemaController {
         );
     }
 
-    private boolean insertCinema(Cinema cinema) {
-        String query = "INSERT INTO phong (ten_phong, suc_chua, trang_thai) VALUES (?, ?, ?)";
+    /**
+     * Thêm phòng sử dụng Stored Procedure
+     */
+    private boolean insertCinemaUsingProcedure(Cinema cinema) {
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+             CallableStatement stmt = conn.prepareCall("{CALL sp_them_phong(?, ?, ?, ?, ?)}")) {
             
             stmt.setString(1, cinema.getTenPhong());
             stmt.setInt(2, cinema.getSucChua());
             stmt.setString(3, cinema.getTrangThai());
+            stmt.registerOutParameter(4, Types.BIGINT);
+            stmt.registerOutParameter(5, Types.VARCHAR);
             
-            int affected = stmt.executeUpdate();
+            stmt.execute();
             
-            if (affected > 0) {
-                // Lấy ID vừa tạo để tạo ghế tự động
-                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        long maPhong = generatedKeys.getLong(1);
-                        createDefaultSeats(maPhong, cinema.getSucChua());
-                    }
-                }
+            Long maPhong = stmt.getLong(4);
+            String message = stmt.getString(5);
+            
+            if (maPhong != null && maPhong > 0) {
+                System.out.println("✓ " + message);
                 return true;
+            } else {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", message);
+                return false;
             }
-            
-            return false;
             
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể thêm phòng: " + e.getMessage());
@@ -348,75 +445,32 @@ public class CinemaController {
         }
     }
 
-    private void createDefaultSeats(long maPhong, int totalSeats) {
-        // Tạo ghế mặc định: 10 hàng x 10 ghế (hoặc tính toán dựa trên totalSeats)
-        int rows = (int) Math.ceil(totalSeats / 10.0);
-        int seatsPerRow = 10;
-        
-        String insertSeat = "INSERT INTO ghe (ma_phong, hang_ghe, so_ghe, ma_loai_ghe) VALUES (?, ?, ?, ?)";
-        
+    /**
+     * Cập nhật phòng sử dụng Stored Procedure
+     */
+    private boolean updateCinemaUsingProcedure(Cinema cinema) {
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(insertSeat)) {
+             CallableStatement stmt = conn.prepareCall("{CALL sp_cap_nhat_phong(?, ?, ?, ?, ?, ?)}")) {
             
-            // Lấy loại ghế mặc định (Thường)
-            long maLoaiGhe = getDefaultSeatTypeId();
+            stmt.setLong(1, cinema.getMaPhong());
+            stmt.setString(2, cinema.getTenPhong());
+            stmt.setInt(3, cinema.getSucChua());
+            stmt.setString(4, cinema.getTrangThai());
+            stmt.registerOutParameter(5, Types.BOOLEAN);
+            stmt.registerOutParameter(6, Types.VARCHAR);
             
-            char hangGhe = 'A';
-            int seatCount = 0;
+            stmt.execute();
             
-            for (int i = 0; i < rows && seatCount < totalSeats; i++) {
-                for (int j = 1; j <= seatsPerRow && seatCount < totalSeats; j++) {
-                    stmt.setLong(1, maPhong);
-                    stmt.setString(2, String.valueOf(hangGhe));
-                    stmt.setInt(3, j);
-                    stmt.setLong(4, maLoaiGhe);
-                    stmt.addBatch();
-                    seatCount++;
-                }
-                hangGhe++;
+            boolean success = stmt.getBoolean(5);
+            String message = stmt.getString(6);
+            
+            if (!success) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", message);
+            } else {
+                System.out.println("✓ " + message);
             }
             
-            stmt.executeBatch();
-            
-        } catch (SQLException e) {
-            System.err.println("Không thể tạo ghế tự động: " + e.getMessage());
-        }
-    }
-
-    private long getDefaultSeatTypeId() throws SQLException {
-        String query = "SELECT ma_loai_ghe FROM loai_ghe LIMIT 1";
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            if (rs.next()) {
-                return rs.getLong("ma_loai_ghe");
-            }
-        }
-        // Nếu chưa có loại ghế, tạo mặc định
-        String insert = "INSERT INTO loai_ghe (ten_loai_ghe, he_so_gia) VALUES ('Thường', 1.0)";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.executeUpdate();
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    return rs.getLong(1);
-                }
-            }
-        }
-        return 1L;
-    }
-
-    private boolean updateCinema(Cinema cinema) {
-        String query = "UPDATE phong SET ten_phong=?, suc_chua=?, trang_thai=? WHERE ma_phong=?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            
-            stmt.setString(1, cinema.getTenPhong());
-            stmt.setInt(2, cinema.getSucChua());
-            stmt.setString(3, cinema.getTrangThai());
-            stmt.setLong(4, cinema.getMaPhong());
-            
-            return stmt.executeUpdate() > 0;
+            return success;
             
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể cập nhật phòng: " + e.getMessage());
@@ -425,24 +479,44 @@ public class CinemaController {
         }
     }
 
-    private boolean deleteCinema(long maPhong) {
-        String query = "DELETE FROM phong WHERE ma_phong=?";
+    /**
+     * Xóa phòng sử dụng Stored Procedure
+     */
+    private boolean deleteCinemaUsingProcedure(long maPhong) {
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             CallableStatement stmt = conn.prepareCall("{CALL sp_xoa_phong(?, ?, ?)}")) {
             
             stmt.setLong(1, maPhong);
-            return stmt.executeUpdate() > 0;
+            stmt.registerOutParameter(2, Types.BOOLEAN);
+            stmt.registerOutParameter(3, Types.VARCHAR);
+            
+            stmt.execute();
+            
+            boolean success = stmt.getBoolean(2);
+            String message = stmt.getString(3);
+            
+            if (!success) {
+                showAlert(Alert.AlertType.ERROR, "Lỗi", message);
+            } else {
+                System.out.println("✓ " + message);
+            }
+            
+            return success;
             
         } catch (SQLException e) {
-            if (e.getMessage().contains("foreign key constraint")) {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", 
-                    "Không thể xóa phòng này vì đang có suất chiếu hoặc dữ liệu liên quan!");
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể xóa phòng: " + e.getMessage());
-            }
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể xóa phòng: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
+    }
+
+    private String translateStatus(String status) {
+        return switch (status) {
+            case "HOAT_DONG" -> "Đang hoạt động";
+            case "BAO_TRI" -> "Đang bảo trì";
+            case "NGUNG" -> "Ngừng hoạt động";
+            default -> status;
+        };
     }
 
     private void showAlert(Alert.AlertType type, String title, String content) {
@@ -477,4 +551,23 @@ public class CinemaController {
         public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
     }
     
+    // Model class SeatInfo cho chi tiết ghế
+    public static class SeatInfo {
+        private String hangGhe;
+        private int soGhe;
+        private String loaiGhe;
+        private double heSoGia;
+
+        public SeatInfo(String hangGhe, int soGhe, String loaiGhe, double heSoGia) {
+            this.hangGhe = hangGhe;
+            this.soGhe = soGhe;
+            this.loaiGhe = loaiGhe;
+            this.heSoGia = heSoGia;
+        }
+
+        public String getHangGhe() { return hangGhe; }
+        public int getSoGhe() { return soGhe; }
+        public String getLoaiGhe() { return loaiGhe; }
+        public double getHeSoGia() { return heSoGia; }
+    }
 }
