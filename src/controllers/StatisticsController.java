@@ -6,11 +6,17 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.FileChooser;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
 
 import database.DBConnection;
 
@@ -50,6 +56,12 @@ public class StatisticsController {
     private final DecimalFormat currencyFormat = new DecimalFormat("#,###");
     private final DecimalFormat percentFormat = new DecimalFormat("##.##");
 
+    // Lưu dữ liệu để xuất PDF
+    private double currentRevenue = 0;
+    private int currentTickets = 0;
+    private int currentCustomers = 0;
+    private int currentScreenings = 0;
+
     @FXML
     public void initialize() {
         // Khởi tạo ComboBox
@@ -85,11 +97,158 @@ public class StatisticsController {
 
     @FXML
     private void handleExport() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Xuất báo cáo");
-        alert.setHeaderText("Chức năng đang phát triển");
-        alert.setContentText("Báo cáo sẽ được xuất ra file Excel/PDF");
-        alert.showAndWait();
+        try {
+            // Tạo FileChooser
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Lưu báo cáo PDF");
+            fileChooser.setInitialFileName("BaoCaoThongKe_" + 
+                LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".pdf");
+            fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("PDF Files", "*.pdf")
+            );
+
+            File file = fileChooser.showSaveDialog(exportButton.getScene().getWindow());
+            
+            if (file != null) {
+                exportToPDF(file);
+                showSuccessAlert("Xuất báo cáo thành công!\nĐã lưu tại: " + file.getAbsolutePath());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert("Lỗi khi xuất PDF: " + e.getMessage());
+        }
+    }
+
+    private void exportToPDF(File file) throws Exception {
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, new FileOutputStream(file));
+        document.open();
+
+        // Tạo font tiếng Việt (sử dụng font mặc định hỗ trợ Unicode)
+        BaseFont bf = BaseFont.createFont("c:/windows/fonts/arial.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+        Font titleFont = new Font(bf, 18, Font.BOLD, BaseColor.RED);
+        Font headerFont = new Font(bf, 14, Font.BOLD, BaseColor.BLACK);
+        Font normalFont = new Font(bf, 11, Font.NORMAL, BaseColor.BLACK);
+        Font boldFont = new Font(bf, 11, Font.BOLD, BaseColor.BLACK);
+
+        // Tiêu đề
+        Paragraph title = new Paragraph("BÁO CÁO THỐNG KÊ RẠP CHIẾU PHIM", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        title.setSpacingAfter(10);
+        document.add(title);
+
+        // Thời gian báo cáo
+        LocalDate fromDate = fromDatePicker.getValue();
+        LocalDate toDate = toDatePicker.getValue();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        
+        Paragraph period = new Paragraph(
+            "Từ ngày: " + fromDate.format(formatter) + " - Đến ngày: " + toDate.format(formatter),
+            normalFont
+        );
+        period.setAlignment(Element.ALIGN_CENTER);
+        period.setSpacingAfter(20);
+        document.add(period);
+
+        // Loại thống kê
+        Paragraph type = new Paragraph("Loại thống kê: " + statisticTypeComboBox.getValue(), boldFont);
+        type.setSpacingAfter(15);
+        document.add(type);
+
+        // === PHẦN TỔNG QUAN ===
+        Paragraph summaryTitle = new Paragraph("TỔNG QUAN", headerFont);
+        summaryTitle.setSpacingAfter(10);
+        document.add(summaryTitle);
+
+        // Bảng tổng quan
+        PdfPTable summaryTable = new PdfPTable(2);
+        summaryTable.setWidthPercentage(100);
+        summaryTable.setSpacingAfter(20);
+        
+        addSummaryRow(summaryTable, "Tổng doanh thu:", 
+            currencyFormat.format(currentRevenue) + " VNĐ", normalFont, boldFont);
+        addSummaryRow(summaryTable, "Tổng vé bán:", 
+            currentTickets + " vé", normalFont, boldFont);
+        addSummaryRow(summaryTable, "Khách hàng mới:", 
+            currentCustomers + " người", normalFont, boldFont);
+        addSummaryRow(summaryTable, "Tổng suất chiếu:", 
+            currentScreenings + " suất", normalFont, boldFont);
+        
+        document.add(summaryTable);
+
+        // === PHẦN CHI TIẾT ===
+        Paragraph detailTitle = new Paragraph("CHI TIẾT THỐNG KÊ", headerFont);
+        detailTitle.setSpacingAfter(10);
+        document.add(detailTitle);
+
+        // Bảng chi tiết
+        ObservableList<StatisticDetail> data = detailTableView.getItems();
+        
+        if (data != null && !data.isEmpty()) {
+            PdfPTable detailTable = new PdfPTable(6);
+            detailTable.setWidthPercentage(100);
+            detailTable.setWidths(new int[]{15, 30, 12, 12, 18, 13});
+
+            // Header
+            addTableHeader(detailTable, "Ngày", boldFont);
+            addTableHeader(detailTable, "Phim/Mục", boldFont);
+            addTableHeader(detailTable, "Suất chiếu", boldFont);
+            addTableHeader(detailTable, "Vé/SL", boldFont);
+            addTableHeader(detailTable, "Doanh thu", boldFont);
+            addTableHeader(detailTable, "Tỷ lệ", boldFont);
+
+            // Data rows
+            for (StatisticDetail detail : data) {
+                addTableCell(detailTable, detail.getDate(), normalFont);
+                addTableCell(detailTable, detail.getMovie(), normalFont);
+                addTableCell(detailTable, String.valueOf(detail.getScreenings()), normalFont);
+                addTableCell(detailTable, String.valueOf(detail.getTickets()), normalFont);
+                addTableCell(detailTable, detail.getRevenue(), normalFont);
+                addTableCell(detailTable, detail.getOccupancy(), normalFont);
+            }
+
+            document.add(detailTable);
+        }
+
+        // Footer
+        Paragraph footer = new Paragraph(
+            "\n\nBáo cáo được tạo tự động vào: " + 
+            LocalDate.now().format(formatter) + " " + 
+            java.time.LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")),
+            new Font(bf, 9, Font.ITALIC, BaseColor.GRAY)
+        );
+        footer.setAlignment(Element.ALIGN_RIGHT);
+        document.add(footer);
+
+        document.close();
+    }
+
+    private void addSummaryRow(PdfPTable table, String label, String value, Font labelFont, Font valueFont) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setBorder(Rectangle.NO_BORDER);
+        labelCell.setPadding(8);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
+        valueCell.setBorder(Rectangle.NO_BORDER);
+        valueCell.setPadding(8);
+        table.addCell(valueCell);
+    }
+
+    private void addTableHeader(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        cell.setPadding(8);
+        table.addCell(cell);
+    }
+
+    private void addTableCell(PdfPTable table, String text, Font font) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setPadding(6);
+        cell.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        table.addCell(cell);
     }
 
     private void loadStatistics() {
@@ -152,10 +311,10 @@ public class StatisticsController {
                 ResultSet rs = cs.executeQuery();
                 if (rs.next()) {
                     // Dữ liệu kỳ hiện tại
-                    double revenue = rs.getDouble("tong_doanh_thu");
-                    int tickets = rs.getInt("tong_ve_ban");
-                    int customers = rs.getInt("khach_hang_moi");
-                    int screenings = rs.getInt("tong_suat_chieu");
+                    currentRevenue = rs.getDouble("tong_doanh_thu");
+                    currentTickets = rs.getInt("tong_ve_ban");
+                    currentCustomers = rs.getInt("khach_hang_moi");
+                    currentScreenings = rs.getInt("tong_suat_chieu");
                     
                     // Dữ liệu kỳ trước
                     double prevRevenue = rs.getDouble("doanh_thu_ky_truoc");
@@ -164,16 +323,16 @@ public class StatisticsController {
                     int prevScreenings = rs.getInt("suat_chieu_ky_truoc");
                     
                     // Cập nhật UI
-                    totalRevenueLabel.setText(currencyFormat.format(revenue) + " VNĐ");
-                    totalTicketsLabel.setText(tickets + " vé");
-                    newCustomersLabel.setText(customers + " người");
-                    totalScreeningsLabel.setText(screenings + " suất");
+                    totalRevenueLabel.setText(currencyFormat.format(currentRevenue) + " VNĐ");
+                    totalTicketsLabel.setText(currentTickets + " vé");
+                    newCustomersLabel.setText(currentCustomers + " người");
+                    totalScreeningsLabel.setText(currentScreenings + " suất");
                     
                     // Cập nhật % thay đổi
-                    updateChangeLabel(revenueChangeLabel, revenue, prevRevenue);
-                    updateChangeLabel(ticketsChangeLabel, tickets, prevTickets);
-                    updateChangeLabel(customersChangeLabel, customers, prevCustomers);
-                    updateChangeLabel(screeningsChangeLabel, screenings, prevScreenings);
+                    updateChangeLabel(revenueChangeLabel, currentRevenue, prevRevenue);
+                    updateChangeLabel(ticketsChangeLabel, currentTickets, prevTickets);
+                    updateChangeLabel(customersChangeLabel, currentCustomers, prevCustomers);
+                    updateChangeLabel(screeningsChangeLabel, currentScreenings, prevScreenings);
                 }
             }
 
@@ -474,6 +633,14 @@ public class StatisticsController {
     private void showAlert(String message) {
         Alert alert = new Alert(Alert.AlertType.WARNING);
         alert.setTitle("Cảnh báo");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
+    }
+
+    private void showSuccessAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Thành công");
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
