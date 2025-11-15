@@ -13,7 +13,6 @@
                 <Label text="🍿 QUẢN LÝ SẢN PHẨM (COMBO)" style="-fx-text-fill: white; -fx-font-size: 20px; -fx-font-weight: bold;" />
                 <Pane HBox.hgrow="ALWAYS" />
                 <Button fx:id ="btnThemCombo" text="➕ Thêm Combo" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;" />
-                <Button fx:id="btnLamMoi" text="🔄 Làm mới" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-weight: bold;" />
             </children>
             <padding>
                 <Insets bottom="12" left="15" right="15" top="12" />
@@ -77,6 +76,13 @@
 
                         <!-- DANH SÁCH SẢN PHẨM TRONG COMBO -->
                         <Label text="🛒 Sản phẩm trong combo:" style="-fx-font-weight: bold;" />
+                        <!-- Các nút Thêm và Sửa sản phẩm trong combo -->
+<HBox spacing="10" alignment="CENTER_LEFT" style="-fx-padding: 0 0 10 0;">
+    <children>
+        <Button fx:id="btnThemSanPham" text="➕ Thêm" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;" />
+        <Button fx:id="btnSuaSanPham" text="✏️ Sửa" style="-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-weight: bold;" />
+    </children>
+</HBox>
                         <TableView fx:id="tblSanPhamTrongCombo" prefHeight="200">
                             <columns>
                                 <TableColumn fx:id="colTenSP" prefWidth="150" text="Sản phẩm" />
