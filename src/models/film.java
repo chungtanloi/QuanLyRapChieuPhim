@@ -72,7 +72,8 @@ public class film {
     public SimpleLongProperty maPhimProperty() { return maPhim; }
 
     public String getTenPhim() { return tenPhim.get(); }
-    public SimpleStringProperty tenPhimProperty() { return tenPhim; }
+    
+public SimpleStringProperty tenPhimProperty() { return tenPhim; }
 
     public int getThoiLuongPhut() { return thoiLuongPhut.get(); }
     public SimpleIntegerProperty thoiLuongPhutProperty() { return thoiLuongPhut; }
@@ -97,4 +98,9 @@ public class film {
 
     public String getQuocGia() { return quocGia; }
     public void setQuocGia(String quocGia) { this.quocGia = quocGia; }
+
+    // THÊM PHƯƠNG THỨC NÀY
+    public void setNgayPhatHanh(String ngayPhatHanh) { 
+        this.ngayPhatHanh.set(ngayPhatHanh); 
+    }
 }
