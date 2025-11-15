@@ -1,385 +1,386 @@
 package controllers;
 
-import javafx.animation.*;
-import javafx.application.Platform;
-import javafx.event.ActionEvent;
+import database.DBConnection;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Parent;
-import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
-import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.util.Duration;
-import database.DBConnection;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.scene.control.Alert;
-
-import javafx.fxml.FXML;
-
-import javafx.scene.control.TextField;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.Alert;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.CallableStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import javafx.stage.Stage;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class HomeController {
+public class HomeController implements Initializable {
 
-    // ====== FXML refs ======
-    @FXML
-    private VBox sidebar;
-    @FXML
-    private ImageView imgToggle;
-    @FXML
-    private ScrollPane scroll;
+    @FXML private Label lblWelcome;
+    @FXML private Label lblTotalRevenue;
+    @FXML private Label lblRevenueChange;
+    @FXML private Label lblTotalTickets;
+    @FXML private Label lblTicketsChange;
+    @FXML private Label lblTotalCustomers;
+    @FXML private Label lblCustomersChange;
+    @FXML private Label lblTotalMovies;
+    @FXML private Label lblMoviesInfo;
+    @FXML private Label lblTodayScreenings;
+    @FXML private Label lblScreeningsInfo;
+    @FXML private Label lblTotalStaff;
+    @FXML private Label lblStaffInfo;
+    @FXML private LineChart<String, Number> revenueChart;
+    @FXML private BarChart<String, Number> topMoviesChart;
+    @FXML private BorderPane root;
+    @FXML private VBox sidebar;
+    @FXML private Button btnLogout;
 
-    // ⚙️ Các thành phần thống kê (trùng với home.fxml)
-    @FXML
-    private Label lblDoanhThuHomNay;
-    @FXML
-    private Label lblTongVeBan;
-    @FXML
-    private Label lblTiLeLapDay;
-    @FXML
-    private LineChart<String, Number> chartDoanhThu;
-    @FXML
-    private PieChart chartPhanBoPhim;
+    private Connection connection;
+    private NumberFormat currencyFormat;
 
-    // ====== State ======
-    private boolean collapsed = false;
-    private final double expandedWidth = 260;
-    private final double collapsedWidth = 72;
-    private final List<Button> menuButtons = new ArrayList<>();
-    private final Map<String, Parent> viewCache = new HashMap<>();
-
-    // ====== INIT ======
-    @FXML
-    private void initialize() {
-        System.out.println("[HomeController] initialize()");
-        if (imgToggle != null) {
-            imgToggle.setStyle("-fx-cursor: hand;");
-        }
-        if (sidebar != null) {
-            collectMenuButtons(sidebar);
-        }
-        if (scroll != null && scroll.getContent() instanceof VBox) {
-            VBox content = (VBox) scroll.getContent();
-            content.setFillWidth(true);
-            content.prefWidthProperty().bind(scroll.widthProperty().subtract(24));
-        }
-
-        // 🔹 Gọi load dữ liệu dashboard (rất quan trọng)
-        Platform.runLater(() -> {
-            loadTongQuan();
-            loadBieuDoDoanhThu();
-            loadBieuDoPhanBoPhim();
-        });
-    }
-
-    private void collectMenuButtons(VBox box) {
-        for (Node n : box.getChildren()) {
-            if (n instanceof Button b && b.getStyleClass().contains("nav-button")) {
-                menuButtons.add(b);
-            } else if (n instanceof VBox inner) {
-                collectMenuButtons(inner);
-            }
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        connection = DBConnection.getConnection();
+        currencyFormat = NumberFormat.getInstance(new Locale("vi", "VN"));
+        
+        if (connection != null) {
+            loadDashboardData();
+            loadRevenueChart();
+            loadTopMoviesChart();
+        } else {
+            showAlert("Lỗi", "Không thể kết nối đến cơ sở dữ liệu!", Alert.AlertType.ERROR);
         }
     }
 
-    // ====== ĐIỀU HƯỚNG ======
-    @FXML
-    private void handleNav(ActionEvent e) {
-        if (!(e.getSource() instanceof Button b)) {
-            return;
-        }
-        Object ud = b.getUserData();
-        if (ud == null) {
-            return;
-        }
-        String fxmlPath = ud.toString();
-        if (loadViewIntoCenter(fxmlPath)) {
-            highlightActiveButton(b);
-        }
-    }
-
-    private boolean loadViewIntoCenter(String fxmlPath) {
-        if (scroll == null) {
-            return false;
-        }
+    /**
+     * Tải dữ liệu tổng quan cho dashboard
+     */
+    private void loadDashboardData() {
         try {
-            Parent view = viewCache.get(fxmlPath);
-            if (view == null) {
-                URL url = getClass().getResource(fxmlPath);
-                if (url == null) {
-                    System.err.println("❌ Không tìm thấy FXML: " + fxmlPath);
-                    return false;
-                }
-                view = FXMLLoader.load(url);
-                viewCache.put(fxmlPath, view);
-            }
-            scroll.setContent(view);
-            return true;
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return false;
-        }
-    }
-
-    private void highlightActiveButton(Button active) {
-        for (Button btn : menuButtons) {
-            btn.getStyleClass().remove("active");
-        }
-        if (!active.getStyleClass().contains("active")) {
-            active.getStyleClass().add("active");
-        }
-    }
-
-    // =============================================================
-    // ========== 📊 CÁC HÀM LẤY DỮ LIỆU DASHBOARD ==================
-    // =============================================================
-    private void loadTongQuan() {
-        String sqlDoanhThu = """
-            SELECT IFNULL(SUM(tong_tien),0) AS doanh_thu
-            FROM don_hang
-            WHERE DATE(dat_luc) = CURDATE() AND trang_thai = 'DA_THANH_TOAN';
-        """;
-
-        String sqlTongVe = """
-            SELECT IFNULL(COUNT(*),0) AS tong_ve
-            FROM ve
-            WHERE trang_thai = 'DA_BAN' AND DATE(ban_luc) = CURDATE();
-        """;
-
-        String sqlTiLeLapDay = """
-            SELECT IFNULL(ROUND(100 * COUNT(CASE WHEN v.trang_thai = 'DA_BAN' THEN 1 END) / COUNT(*), 2),0) AS tile
-            FROM ve v
-            JOIN suat_chieu s ON v.ma_suat_chieu = s.ma_suat_chieu
-            WHERE DATE(s.bat_dau_luc) = CURDATE();
-        """;
-
-        try (Connection conn = DBConnection.getConnection()) {
-            // Doanh thu hôm nay
-            try (PreparedStatement ps = conn.prepareStatement(sqlDoanhThu); ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    double dt = rs.getDouble("doanh_thu");
-                    lblDoanhThuHomNay.setText(String.format("%,.0f VNĐ", dt));
-                }
-            }
-
-            // Tổng vé bán
-            try (PreparedStatement ps = conn.prepareStatement(sqlTongVe); ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    lblTongVeBan.setText(rs.getInt("tong_ve") + " vé");
-                }
-            }
-
-            // Tỉ lệ lấp đầy
-            try (PreparedStatement ps = conn.prepareStatement(sqlTiLeLapDay); ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    lblTiLeLapDay.setText(rs.getDouble("tile") + "%");
-                }
-            }
+            // Tổng doanh thu
+            loadTotalRevenue();
+            
+            // Tổng vé đã bán
+            loadTotalTickets();
+            
+            // Tổng khách hàng
+            loadTotalCustomers();
+            
+            // Tổng phim đang chiếu
+            loadTotalMovies();
+            
+            // Suất chiếu hôm nay
+            loadTodayScreenings();
+            
+            // Tổng nhân viên
+            loadTotalStaff();
+            
         } catch (SQLException e) {
             e.printStackTrace();
+            showAlert("Lỗi", "Không thể tải dữ liệu dashboard: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
-    private void loadBieuDoDoanhThu() {
-        String sql = """
-            SELECT DATE(dat_luc) AS ngay, SUM(tong_tien) AS doanh_thu
-            FROM don_hang
-            WHERE trang_thai = 'DA_THANH_TOAN'
-            GROUP BY DATE(dat_luc)
-            ORDER BY ngay ASC
-            LIMIT 7;
-        """;
+    /**
+     * Tải tổng doanh thu và so sánh với tháng trước
+     */
+    private void loadTotalRevenue() throws SQLException {
+        String sql = "SELECT " +
+                     "  SUM(CASE WHEN MONTH(dat_luc) = MONTH(CURDATE()) AND YEAR(dat_luc) = YEAR(CURDATE()) " +
+                     "           THEN tong_tien ELSE 0 END) as doanh_thu_thang_nay, " +
+                     "  SUM(CASE WHEN MONTH(dat_luc) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
+                     "           AND YEAR(dat_luc) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
+                     "           THEN tong_tien ELSE 0 END) as doanh_thu_thang_truoc " +
+                     "FROM don_hang " +
+                     "WHERE trang_thai = 'DA_THANH_TOAN'";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                double revenueThisMonth = rs.getDouble("doanh_thu_thang_nay");
+                double revenueLastMonth = rs.getDouble("doanh_thu_thang_truoc");
+                
+                lblTotalRevenue.setText(currencyFormat.format(revenueThisMonth) + " ₫");
+                
+                if (revenueLastMonth > 0) {
+                    double change = ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100;
+                    String arrow = change >= 0 ? "↑" : "↓";
+                    lblRevenueChange.setText(String.format("%s %.1f%% so với tháng trước", arrow, Math.abs(change)));
+                } else {
+                    lblRevenueChange.setText("Tháng đầu tiên");
+                }
+            }
+        }
+    }
 
-        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+    /**
+     * Tải tổng số vé đã bán
+     */
+    private void loadTotalTickets() throws SQLException {
+        String sql = "SELECT " +
+                     "  COUNT(CASE WHEN MONTH(ban_luc) = MONTH(CURDATE()) AND YEAR(ban_luc) = YEAR(CURDATE()) " +
+                     "             THEN 1 END) as ve_thang_nay, " +
+                     "  COUNT(CASE WHEN MONTH(ban_luc) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
+                     "             AND YEAR(ban_luc) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
+                     "             THEN 1 END) as ve_thang_truoc " +
+                     "FROM ve WHERE trang_thai = 'DA_BAN'";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                int ticketsThisMonth = rs.getInt("ve_thang_nay");
+                int ticketsLastMonth = rs.getInt("ve_thang_truoc");
+                
+                lblTotalTickets.setText(currencyFormat.format(ticketsThisMonth));
+                
+                if (ticketsLastMonth > 0) {
+                    double change = ((double)(ticketsThisMonth - ticketsLastMonth) / ticketsLastMonth) * 100;
+                    String arrow = change >= 0 ? "↑" : "↓";
+                    lblTicketsChange.setText(String.format("%s %.1f%% so với tháng trước", arrow, Math.abs(change)));
+                } else {
+                    lblTicketsChange.setText("Tháng đầu tiên");
+                }
+            }
+        }
+    }
 
+    /**
+     * Tải tổng số khách hàng
+     */
+    private void loadTotalCustomers() throws SQLException {
+        String sql = "SELECT COUNT(*) as total, " +
+                     "  SUM(CASE WHEN MONTH(tao_luc) = MONTH(CURDATE()) " +
+                     "           AND YEAR(tao_luc) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as new_customers " +
+                     "FROM khach_hang";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                int total = rs.getInt("total");
+                int newCustomers = rs.getInt("new_customers");
+                
+                lblTotalCustomers.setText(currencyFormat.format(total));
+                lblCustomersChange.setText("↑ " + newCustomers + " khách hàng mới tháng này");
+            }
+        }
+    }
+
+    /**
+     * Tải tổng số phim đang chiếu
+     */
+    private void loadTotalMovies() throws SQLException {
+        String sqlMovies = "SELECT COUNT(DISTINCT ma_phim) as total FROM suat_chieu " +
+                          "WHERE bat_dau_luc >= CURDATE() AND trang_thai != 'HUY'";
+        String sqlRooms = "SELECT COUNT(*) as total FROM phong WHERE trang_thai = 'HOAT_DONG'";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs1 = stmt.executeQuery(sqlMovies)) {
+            if (rs1.next()) {
+                lblTotalMovies.setText(String.valueOf(rs1.getInt("total")));
+            }
+        }
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs2 = stmt.executeQuery(sqlRooms)) {
+            if (rs2.next()) {
+                lblMoviesInfo.setText("Trong " + rs2.getInt("total") + " phòng chiếu");
+            }
+        }
+    }
+
+    /**
+     * Tải suất chiếu hôm nay
+     */
+    private void loadTodayScreenings() throws SQLException {
+        String sql = "SELECT COUNT(*) as total, " +
+                     "  SUM(CASE WHEN trang_thai = 'MO_BAN' THEN 1 ELSE 0 END) as open " +
+                     "FROM suat_chieu " +
+                     "WHERE DATE(bat_dau_luc) = CURDATE()";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                int total = rs.getInt("total");
+                int open = rs.getInt("open");
+                
+                lblTodayScreenings.setText(String.valueOf(total));
+                lblScreeningsInfo.setText(open + " suất đang mở bán");
+            }
+        }
+    }
+
+    /**
+     * Tải tổng số nhân viên
+     */
+    private void loadTotalStaff() throws SQLException {
+        String sql = "SELECT COUNT(*) as total FROM nhan_vien nv " +
+                     "JOIN tai_khoan tk ON nv.ma_tai_khoan = tk.ma_tai_khoan " +
+                     "WHERE tk.hoat_dong = 1";
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                int total = rs.getInt("total");
+                lblTotalStaff.setText(String.valueOf(total));
+                lblStaffInfo.setText("Đang hoạt động");
+            }
+        }
+    }
+
+    /**
+     * Tải biểu đồ doanh thu 7 ngày qua
+     */
+    private void loadRevenueChart() {
+    try {
+        String sql = "SELECT DATE(dat_luc) as ngay, SUM(tong_tien) as doanh_thu " +
+                    "FROM don_hang " +
+                    "WHERE trang_thai = 'DA_THANH_TOAN' " +
+                    "  AND dat_luc >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) " +
+                    "GROUP BY DATE(dat_luc) " +
+                    "ORDER BY ngay";
+        
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Doanh thu");
+        
+        try (Statement stmt = connection.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            
+            while (rs.next()) {
+                // Lấy ngày và revenue
+                java.sql.Date sqlDate = rs.getDate("ngay");
+                double revenue = rs.getDouble("doanh_thu");
+                
+                // Format ngày
+                String dateStr = "";
+                if (sqlDate != null) {
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM");
+                    dateStr = sdf.format(sqlDate);
+                }
+                
+                series.getData().add(new XYChart.Data<>(dateStr, revenue));
+            }
+        }
+        
+        revenueChart.getData().clear();
+        revenueChart.getData().add(series);
+        
+    } catch (SQLException e) {
+        e.printStackTrace();
+        System.out.println("Lỗi load revenue chart: " + e.getMessage());
+    }
+}
+    /**
+     * Tải biểu đồ top 5 phim có doanh thu cao nhất
+     */
+    private void loadTopMoviesChart() {
+        try {
+            String sql = "SELECT p.ten_phim, SUM(dh.tong_tien) as doanh_thu " +
+                        "FROM don_hang dh " +
+                        "JOIN don_ve dv ON dh.ma_don_hang = dv.ma_don_hang " +
+                        "JOIN ve v ON dv.ma_ve = v.ma_ve " +
+                        "JOIN suat_chieu sc ON v.ma_suat_chieu = sc.ma_suat_chieu " +
+                        "JOIN phim p ON sc.ma_phim = p.ma_phim " +
+                        "WHERE dh.trang_thai = 'DA_THANH_TOAN' " +
+                        "  AND MONTH(dh.dat_luc) = MONTH(CURDATE()) " +
+                        "  AND YEAR(dh.dat_luc) = YEAR(CURDATE()) " +
+                        "GROUP BY p.ma_phim, p.ten_phim " +
+                        "ORDER BY doanh_thu DESC " +
+                        "LIMIT 5";
+            
             XYChart.Series<String, Number> series = new XYChart.Series<>();
-            series.setName("Doanh thu 7 ngày gần nhất");
-
-            while (rs.next()) {
-                series.getData().add(new XYChart.Data<>(
-                        rs.getString("ngay"), rs.getDouble("doanh_thu")));
+            series.setName("Doanh thu");
+            
+            try (Statement stmt = connection.createStatement();
+                 ResultSet rs = stmt.executeQuery(sql)) {
+                while (rs.next()) {
+                    String movieName = rs.getString("ten_phim");
+                    double revenue = rs.getDouble("doanh_thu");
+                    
+                    // Rút gọn tên phim nếu quá dài
+                    if (movieName.length() > 20) {
+                        movieName = movieName.substring(0, 17) + "...";
+                    }
+                    
+                    series.getData().add(new XYChart.Data<>(movieName, revenue));
+                }
             }
-
-            chartDoanhThu.getData().clear();
-            chartDoanhThu.getData().add(series);
-
-            System.out.println("✅ Đã load biểu đồ doanh thu: " + series.getData().size() + " điểm.");
-
+            
+            topMoviesChart.getData().clear();
+            topMoviesChart.getData().add(series);
+            
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    private void loadBieuDoPhanBoPhim() {
-        String sql = """
-            SELECT p.ten_phim, SUM(dh.tong_tien) AS doanh_thu
-            FROM don_hang dh
-            JOIN don_ve dv ON dh.ma_don_hang = dv.ma_don_hang
-            JOIN ve v ON dv.ma_ve = v.ma_ve
-            JOIN suat_chieu sc ON v.ma_suat_chieu = sc.ma_suat_chieu
-            JOIN phim p ON sc.ma_phim = p.ma_phim
-            WHERE dh.trang_thai = 'DA_THANH_TOAN'
-            GROUP BY p.ten_phim
-            ORDER BY doanh_thu DESC
-            LIMIT 5;
-        """;
-
-        try (Connection conn = DBConnection.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
-
-            chartPhanBoPhim.getData().clear();
-
-            while (rs.next()) {
-                chartPhanBoPhim.getData().add(new PieChart.Data(
-                        rs.getString("ten_phim"),
-                        rs.getDouble("doanh_thu")
-                ));
-            }
-
-            System.out.println("✅ Đã load biểu đồ phân bố phim: " + chartPhanBoPhim.getData().size() + " phần.");
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
+    /**
+     * Xử lý điều hướng giữa các trang
+     */
     @FXML
-    private TextField txtTimKiem;
-    @FXML
-    private TableView<SearchResult> tblKetQua;
-    @FXML
-    private TableColumn<SearchResult, String> colLoai, colMa, colTen, colThongTin;
-
-    @FXML
-    public void timKiemTongHop() {
-        String tuKhoa = txtTimKiem.getText().trim();
-        if (tuKhoa.isEmpty()) {
-            Alert alert = new Alert(Alert.AlertType.WARNING, "Vui lòng nhập từ khóa tìm kiếm!");
-            alert.show();
-            return;
-        }
-
-        ObservableList<SearchResult> ketQua = FXCollections.observableArrayList();
-        try (Connection conn = DBConnection.getConnection()) {
-            // Ghi log tìm kiếm
-            String logSQL = "INSERT INTO log_tim_kiem(tu_khoa) VALUES (?)";
-            try (PreparedStatement logStmt = conn.prepareStatement(logSQL)) {
-                logStmt.setString(1, tuKhoa);
-                logStmt.executeUpdate();
-            }
-
-            // Gọi procedure
-            CallableStatement cs = conn.prepareCall("{CALL proc_tim_kiem_tong_hop(?)}");
-            cs.setString(1, tuKhoa);
-            ResultSet rs = cs.executeQuery();
-
-            while (rs.next()) {
-                ketQua.add(new SearchResult(
-                        rs.getString("loai"),
-                        rs.getString("ma"),
-                        rs.getString("ten"),
-                        rs.getString("thong_tin")
-                ));
-            }
-
-            tblKetQua.setItems(ketQua);
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Lỗi khi tìm kiếm: " + e.getMessage());
-            alert.show();
-        }
-    }
-
-// Class phụ để chứa kết quả
-    public static class SearchResult {
-
-        private final SimpleStringProperty loai, ma, ten, thongTin;
-
-        public SearchResult(String loai, String ma, String ten, String thongTin) {
-            this.loai = new SimpleStringProperty(loai);
-            this.ma = new SimpleStringProperty(ma);
-            this.ten = new SimpleStringProperty(ten);
-            this.thongTin = new SimpleStringProperty(thongTin);
-        }
-
-        public String getLoai() {
-            return loai.get();
-        }
-
-        public String getMa() {
-            return ma.get();
-        }
-
-        public String getTen() {
-            return ten.get();
-        }
-
-        public String getThongTin() {
-            return thongTin.get();
-        }
-    }
-// ====== ĐĂNG XUẤT ======
-
-    @FXML
-    private void onLogout(ActionEvent event) {
-        // Xác nhận
-        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
-        confirm.setTitle("Đăng xuất");
-        confirm.setHeaderText("Bạn có chắc muốn đăng xuất?");
-        confirm.setContentText("Mọi tiến trình đang chạy sẽ kết thúc và quay về màn hình đăng nhập.");
-        Optional<javafx.scene.control.ButtonType> choice = confirm.showAndWait();
-        if (choice.isEmpty() || choice.get() != javafx.scene.control.ButtonType.OK) {
-            return;
-        }
-
+    private void handleNav(javafx.event.ActionEvent event) {
         try {
-            // Dọn state tạm (nếu có)
-            viewCache.clear();
-            menuButtons.clear();
-            collapsed = false;
-
-            // (Nếu bạn có timer/thread nền → dừng tại đây)
-            // Đổi scene sang login.fxml
-            Node src = (event != null && event.getSource() instanceof Node) ? (Node) event.getSource() : scroll;
-            javafx.stage.Stage stage = (javafx.stage.Stage) src.getScene().getWindow();
-
-            Parent loginRoot = FXMLLoader.load(getClass().getResource("/models/login.fxml"));
-            javafx.scene.Scene scene = new javafx.scene.Scene(loginRoot);
-            stage.setScene(scene);
-            stage.setTitle("Đăng nhập");
-            stage.show();
-
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            Alert err = new Alert(Alert.AlertType.ERROR, "Không thể mở màn hình đăng nhập: " + ex.getMessage());
-            err.show();
+            Button btn = (Button) event.getSource();
+            String fxmlPath = (String) btn.getUserData();
+            
+            if (fxmlPath != null && !fxmlPath.isEmpty()) {
+                // Xóa class "active" khỏi tất cả các button trong sidebar
+                for (javafx.scene.Node node : sidebar.getChildren()) {
+                    if (node instanceof Button) {
+                        node.getStyleClass().remove("active");
+                    }
+                }
+                
+                // Thêm class "active" cho button được click
+                btn.getStyleClass().add("active");
+                
+                // Tải FXML mới
+                Parent newContent = FXMLLoader.load(getClass().getResource(fxmlPath));
+                root.setCenter(newContent);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert("Lỗi", "Không thể tải trang: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 
+    /**
+     * Xử lý đăng xuất
+     */
+    @FXML
+    private void onLogout(javafx.event.ActionEvent event) {
+        try {
+            // Tải lại trang đăng nhập
+            Parent loginRoot = FXMLLoader.load(getClass().getResource("/models/login.fxml"));
+            Stage stage = (Stage) btnLogout.getScene().getWindow();
+            stage.setScene(new Scene(loginRoot));
+            stage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert("Lỗi", "Không thể đăng xuất: " + e.getMessage(), Alert.AlertType.ERROR);
+        }
+    }
+
+    /**
+     * Hiển thị hộp thoại thông báo
+     */
+    private void showAlert(String title, String content, Alert.AlertType type) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
 }
