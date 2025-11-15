@@ -35,7 +35,11 @@ public class QLKhuyenMaiController implements Initializable {
     @FXML private DatePicker dpBatDau, dpKetThuc;
     @FXML private Label lblTongKM;
 
+    // ===== BUTTONS =====
+    @FXML private Button btnThemKM, btnTimKiem, btnHuy, btnLuu;
+
     private ObservableList<KhuyenMaiVM> khuyenMaiList = FXCollections.observableArrayList();
+    private KhuyenMaiVM khuyenMaiDangChon = null;
 
     // ===== VIEW MODEL =====
     public static class KhuyenMaiVM {
@@ -60,43 +64,75 @@ public class QLKhuyenMaiController implements Initializable {
             this.hoatDong.set(hoatDong);
         }
         
+        // Getters
+        public int getMaKhuyenMai() { return maKhuyenMai.get(); }
         public String getMaCode() { return maCode.get(); }
         public String getKieuGiam() { return kieuGiam.get(); }
         public BigDecimal getGiaTriGiam() { return giaTriGiam.get(); }
         public BigDecimal getDonToiThieu() { return donToiThieu.get(); }
+        public Timestamp getBatDauLuc() { return batDauLuc.get(); }
+        public Timestamp getKetThucLuc() { return ketThucLuc.get(); }
+        public boolean isHoatDong() { return hoatDong.get(); }
+        
+        // Display methods
         public String getThoiGian() {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM HH:mm");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
             return batDauLuc.get().toLocalDateTime().format(formatter) + " - " + 
                    ketThucLuc.get().toLocalDateTime().format(formatter);
         }
+        
         public String getTrangThai() {
             LocalDateTime now = LocalDateTime.now();
+            LocalDateTime batDau = batDauLuc.get().toLocalDateTime();
+            LocalDateTime ketThuc = ketThucLuc.get().toLocalDateTime();
+            
             if (!hoatDong.get()) return "🔴 Tắt";
-            if (now.isBefore(batDauLuc.get().toLocalDateTime())) return "🟡 Sắp diễn ra";
-            if (now.isAfter(ketThucLuc.get().toLocalDateTime())) return "🔴 Hết hạn";
+            if (now.isBefore(batDau)) return "🟡 Sắp diễn ra";
+            if (now.isAfter(ketThuc)) return "🔴 Hết hạn";
             return "🟢 Đang áp dụng";
         }
+        
         public String getMucGiamDisplay() {
             return "PHAN_TRAM".equals(kieuGiam.get()) ? 
                 String.format("%.0f%%", giaTriGiam.get()) : 
                 String.format("%,.0f đ", giaTriGiam.get());
         }
+        
         public String getDonToiThieuDisplay() {
             return donToiThieu.get().compareTo(BigDecimal.ZERO) > 0 ? 
                 String.format("%,.0f đ", donToiThieu.get()) : "Không có";
+        }
+        
+        public String getLoaiGiamDisplay() {
+            return "PHAN_TRAM".equals(kieuGiam.get()) ? "Phần trăm" : "Số tiền";
         }
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        System.out.println("🚀 QLKhuyenMaiController đang khởi tạo...");
+           // Kiểm tra các control
+    System.out.println("🔍 Kiểm tra controls:");
+    System.out.println(" - tblKhuyenMai: " + (tblKhuyenMai != null ? "✅" : "❌"));
+    System.out.println(" - btnThemKM: " + (btnThemKM != null ? "✅" : "❌"));
+    System.out.println(" - btnTimKiem: " + (btnTimKiem != null ? "✅" : "❌"));
+    System.out.println(" - btnHuy: " + (btnHuy != null ? "✅" : "❌"));
+    System.out.println(" - btnLuu: " + (btnLuu != null ? "✅" : "❌"));
+    
         setupTableKhuyenMai();
         setupFormControls();
+        setupEventHandlers();
         loadKhuyenMaiData();
+        
+        System.out.println("✅ QLKhuyenMaiController khởi tạo thành công");
     }
 
     private void setupTableKhuyenMai() {
         colMaKM.setCellValueFactory(new PropertyValueFactory<>("maCode"));
-        colLoaiGiam.setCellValueFactory(new PropertyValueFactory<>("kieuGiam"));
+        
+        // Hiển thị "Phần trăm" / "Số tiền" thay vì "PHAN_TRAM" / "SO_TIEN"
+        colLoaiGiam.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getLoaiGiamDisplay()));
+        
         colMucGiam.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getMucGiamDisplay()));
         colDonToiThieu.setCellValueFactory(cell -> new SimpleStringProperty(cell.getValue().getDonToiThieuDisplay()));
         colThoiGianKM.setCellValueFactory(new PropertyValueFactory<>("thoiGian"));
@@ -104,21 +140,23 @@ public class QLKhuyenMaiController implements Initializable {
 
         // CỘT ACTION
         colActionKM.setCellFactory(col -> new TableCell<KhuyenMaiVM, Void>() {
-            private final Button btnSua = new Button("✏️");
-            private final Button btnXoa = new Button("🗑️");
+            private final Button btnSua = new Button("Sửa");
+            private final Button btnXoa = new Button("Xóa");
             private final HBox container = new HBox(5, btnSua, btnXoa);
             
             {
-                btnSua.setStyle("-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-size: 12px;");
-                btnXoa.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-font-size: 12px;");
+                btnSua.setStyle("-fx-background-color: #3b82f6; -fx-text-fill: white; -fx-font-size: 12px; -fx-pref-width: 60; -fx-background-radius: 3;");
+                btnXoa.setStyle("-fx-background-color: #dc2626; -fx-text-fill: white; -fx-font-size: 12px; -fx-pref-width: 60; -fx-background-radius: 3;");
                 
                 btnSua.setOnAction(e -> {
                     KhuyenMaiVM km = getTableView().getItems().get(getIndex());
+                    System.out.println("Sửa khuyến mãi: " + km.getMaCode());
                     suaKhuyenMai(km);
                 });
                 
                 btnXoa.setOnAction(e -> {
                     KhuyenMaiVM km = getTableView().getItems().get(getIndex());
+                    System.out.println("Xóa khuyến mãi: " + km.getMaCode());
                     xoaKhuyenMai(km);
                 });
             }
@@ -133,17 +171,20 @@ public class QLKhuyenMaiController implements Initializable {
         // SỰ KIỆN CHỌN KHUYẾN MÃI
         tblKhuyenMai.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
+                System.out.println("Chọn khuyến mãi: " + newVal.getMaCode());
                 hienThiChiTietKhuyenMai(newVal);
             }
         });
     }
 
     private void setupFormControls() {
+        // Combo box options
         cbLoaiKM.getItems().addAll("Tất cả", "PHAN_TRAM", "SO_TIEN");
         cbTrangThaiKM.getItems().addAll("Tất cả", "Đang áp dụng", "Hết hạn", "Tắt");
         cbKieuGiam.getItems().addAll("PHAN_TRAM", "SO_TIEN");
         cbStatusKM.getItems().addAll("Bật", "Tắt");
         
+        // Default values
         cbLoaiKM.setValue("Tất cả");
         cbTrangThaiKM.setValue("Tất cả");
         cbKieuGiam.setValue("PHAN_TRAM");
@@ -154,7 +195,75 @@ public class QLKhuyenMaiController implements Initializable {
         dpKetThuc.setValue(LocalDate.now().plusDays(30));
     }
 
+    private void setupEventHandlers() {
+         // Nút Thêm KM
+    if (btnThemKM != null) {
+        System.out.println("✅ Nút Thêm KM được tìm thấy");
+        btnThemKM.setOnAction(e -> {
+            System.out.println("🎯 Click Thêm KM - Đang gọi themKhuyenMaiMoi()");
+            themKhuyenMaiMoi();
+        });
+    } else {
+        System.out.println("❌ Nút Thêm KM là NULL - kiểm tra fx:id trong FXML");
+    }
+        
+          // Nút Tìm kiếm
+    if (btnTimKiem != null) {
+        System.out.println("✅ Nút Tìm kiếm được tìm thấy");
+        btnTimKiem.setOnAction(e -> {
+            System.out.println("🎯 Click Tìm kiếm");
+            timKiemKhuyenMai();
+        });
+    } else {
+        System.out.println("❌ Nút Tìm kiếm là NULL");
+    }
+        
+          // Nút Hủy
+    if (btnHuy != null) {
+        System.out.println("✅ Nút Hủy được tìm thấy");
+        btnHuy.setOnAction(e -> {
+            System.out.println("🎯 Click Hủy");
+            themKhuyenMaiMoi();
+        });
+    } else {
+        System.out.println("❌ Nút Hủy là NULL");
+    }
+    
+        
+         // Nút Lưu
+    if (btnLuu != null) {
+        System.out.println("✅ Nút Lưu được tìm thấy");
+        btnLuu.setOnAction(e -> {
+            System.out.println("🎯 Click Lưu");
+            luuKhuyenMai();
+        });
+    } else {
+        System.out.println("❌ Nút Lưu là NULL");
+    }
+        
+         // Tìm kiếm khi nhập text
+    if (txtTimKM != null) {
+        txtTimKM.textProperty().addListener((obs, oldVal, newVal) -> {
+            timKiemKhuyenMai();
+        });
+    }
+          // Tìm kiếm khi thay đổi combo box
+    if (cbLoaiKM != null) {
+        cbLoaiKM.valueProperty().addListener((obs, oldVal, newVal) -> {
+            timKiemKhuyenMai();
+        });
+    }
+    
+    if (cbTrangThaiKM != null) {
+        cbTrangThaiKM.valueProperty().addListener((obs, oldVal, newVal) -> {
+            timKiemKhuyenMai();
+        });
+    }
+    }
+
     private void loadKhuyenMaiData() {
+        System.out.println("🔄 Đang tải dữ liệu khuyến mãi...");
+        
         String sql = """
             SELECT ma_khuyen_mai, ma_code, kieu_giam, gia_tri_giam, don_toi_thieu, 
                    bat_dau_luc, ket_thuc_luc, hoat_dong
@@ -168,7 +277,7 @@ public class QLKhuyenMaiController implements Initializable {
              ResultSet rs = ps.executeQuery()) {
             
             while (rs.next()) {
-                khuyenMaiList.add(new KhuyenMaiVM(
+                KhuyenMaiVM km = new KhuyenMaiVM(
                     rs.getInt("ma_khuyen_mai"),
                     rs.getString("ma_code"),
                     rs.getString("kieu_giam"),
@@ -177,10 +286,16 @@ public class QLKhuyenMaiController implements Initializable {
                     rs.getTimestamp("bat_dau_luc"),
                     rs.getTimestamp("ket_thuc_luc"),
                     rs.getBoolean("hoat_dong")
-                ));
+                );
+                khuyenMaiList.add(km);
             }
+            
+            System.out.println("✅ Đã tải " + khuyenMaiList.size() + " khuyến mãi từ database");
+            
         } catch (SQLException e) {
+            System.out.println("❌ Lỗi tải khuyến mãi: " + e.getMessage());
             e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Lỗi tải dữ liệu: " + e.getMessage());
         }
         
         tblKhuyenMai.setItems(khuyenMaiList);
@@ -188,28 +303,64 @@ public class QLKhuyenMaiController implements Initializable {
     }
 
     private void hienThiChiTietKhuyenMai(KhuyenMaiVM km) {
+        if (km == null) return;
+        
+        System.out.println("📋 Hiển thị chi tiết khuyến mãi: " + km.getMaCode());
+        
+        khuyenMaiDangChon = km;
         txtMaKM.setText(km.getMaCode());
         cbKieuGiam.setValue(km.getKieuGiam());
-        txtMucGiam.setText(String.valueOf(km.getGiaTriGiam()));
-        txtDonToiThieu.setText(String.valueOf(km.getDonToiThieu()));
+        txtMucGiam.setText(km.getGiaTriGiam().toString());
+        txtDonToiThieu.setText(km.getDonToiThieu().toString());
         
         // Set dates
-        dpBatDau.setValue(km.batDauLuc.get().toLocalDateTime().toLocalDate());
-        dpKetThuc.setValue(km.ketThucLuc.get().toLocalDateTime().toLocalDate());
+        dpBatDau.setValue(km.getBatDauLuc().toLocalDateTime().toLocalDate());
+        dpKetThuc.setValue(km.getKetThucLuc().toLocalDateTime().toLocalDate());
         
-        cbStatusKM.setValue(km.hoatDong.get() ? "Bật" : "Tắt");
+        cbStatusKM.setValue(km.isHoatDong() ? "Bật" : "Tắt");
     }
 
-    @FXML
-    private void themKhuyenMaiMoi() {
+   @FXML
+private void themKhuyenMaiMoi() {
+    System.out.println("🎯 BẮT ĐẦU: themKhuyenMaiMoi()");
+    
+    try {
+        // Reset form
         txtMaKM.clear();
+        System.out.println("✅ Đã clear txtMaKM");
+        
         txtMucGiam.clear();
+        System.out.println("✅ Đã clear txtMucGiam");
+        
         txtDonToiThieu.clear();
+        System.out.println("✅ Đã clear txtDonToiThieu");
+        
         cbKieuGiam.setValue("PHAN_TRAM");
+        System.out.println("✅ Đã set cbKieuGiam: " + cbKieuGiam.getValue());
+        
         cbStatusKM.setValue("Bật");
+        System.out.println("✅ Đã set cbStatusKM: " + cbStatusKM.getValue());
+        
         dpBatDau.setValue(LocalDate.now());
+        System.out.println("✅ Đã set dpBatDau: " + dpBatDau.getValue());
+        
         dpKetThuc.setValue(LocalDate.now().plusDays(30));
+        System.out.println("✅ Đã set dpKetThuc: " + dpKetThuc.getValue());
+        
+        khuyenMaiDangChon = null;
+        System.out.println("✅ Đã set khuyenMaiDangChon = null");
+        
+        // Bỏ chọn table
+        tblKhuyenMai.getSelectionModel().clearSelection();
+        System.out.println("✅ Đã clear selection table");
+        
+        System.out.println("🎯 KẾT THÚC: themKhuyenMaiMoi() - Form đã được reset");
+        
+    } catch (Exception e) {
+        System.out.println("❌ LỖI trong themKhuyenMaiMoi(): " + e.getMessage());
+        e.printStackTrace();
     }
+}
 
     @FXML
     private void luuKhuyenMai() {
@@ -221,6 +372,8 @@ public class QLKhuyenMaiController implements Initializable {
         LocalDate ketThuc = dpKetThuc.getValue();
         boolean hoatDong = "Bật".equals(cbStatusKM.getValue());
 
+        System.out.println("💾 Lưu khuyến mãi: " + maCode + ", kiểu: " + kieuGiam);
+
         if (maCode.isEmpty() || mucGiamStr.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Vui lòng nhập mã KM và mức giảm");
             return;
@@ -231,33 +384,73 @@ public class QLKhuyenMaiController implements Initializable {
             return;
         }
 
+        if (batDau.isAfter(ketThuc)) {
+            showAlert(Alert.AlertType.WARNING, "Thời gian bắt đầu phải trước thời gian kết thúc");
+            return;
+        }
+
         try {
             BigDecimal mucGiam = new BigDecimal(mucGiamStr);
             BigDecimal donToiThieu = donToiThieuStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(donToiThieuStr);
 
-            String sql = """
-                INSERT INTO khuyen_mai (ma_code, kieu_giam, gia_tri_giam, don_toi_thieu, bat_dau_luc, ket_thuc_luc, hoat_dong)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """;
-            
-            try (Connection conn = DBConnection.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (khuyenMaiDangChon == null) {
+                // THÊM MỚI
+                String sql = """
+                    INSERT INTO khuyen_mai (ma_code, kieu_giam, gia_tri_giam, don_toi_thieu, bat_dau_luc, ket_thuc_luc, hoat_dong)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                """;
                 
-                ps.setString(1, maCode);
-                ps.setString(2, kieuGiam);
-                ps.setBigDecimal(3, mucGiam);
-                ps.setBigDecimal(4, donToiThieu);
-                ps.setTimestamp(5, Timestamp.valueOf(batDau.atStartOfDay()));
-                ps.setTimestamp(6, Timestamp.valueOf(ketThuc.atTime(23, 59, 59)));
-                ps.setBoolean(7, hoatDong);
-                ps.executeUpdate();
+                try (Connection conn = DBConnection.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+                    
+                    ps.setString(1, maCode);
+                    ps.setString(2, kieuGiam);
+                    ps.setBigDecimal(3, mucGiam);
+                    ps.setBigDecimal(4, donToiThieu);
+                    ps.setTimestamp(5, Timestamp.valueOf(batDau.atStartOfDay()));
+                    ps.setTimestamp(6, Timestamp.valueOf(ketThuc.atTime(23, 59, 59)));
+                    ps.setBoolean(7, hoatDong);
+                    ps.executeUpdate();
+                    
+                    System.out.println("✅ Thêm khuyến mãi thành công");
+                    showAlert(Alert.AlertType.INFORMATION, "Thêm khuyến mãi thành công!");
+                    loadKhuyenMaiData();
+                    themKhuyenMaiMoi();
+                }
+            } else {
+                // CẬP NHẬT
+                String sql = """
+                    UPDATE khuyen_mai 
+                    SET ma_code = ?, kieu_giam = ?, gia_tri_giam = ?, don_toi_thieu = ?, 
+                        bat_dau_luc = ?, ket_thuc_luc = ?, hoat_dong = ?
+                    WHERE ma_khuyen_mai = ?
+                """;
                 
-                showAlert(Alert.AlertType.INFORMATION, "Thêm khuyến mãi thành công!");
-                loadKhuyenMaiData();
-                themKhuyenMaiMoi();
+                try (Connection conn = DBConnection.getConnection();
+                     PreparedStatement ps = conn.prepareStatement(sql)) {
+                    
+                    ps.setString(1, maCode);
+                    ps.setString(2, kieuGiam);
+                    ps.setBigDecimal(3, mucGiam);
+                    ps.setBigDecimal(4, donToiThieu);
+                    ps.setTimestamp(5, Timestamp.valueOf(batDau.atStartOfDay()));
+                    ps.setTimestamp(6, Timestamp.valueOf(ketThuc.atTime(23, 59, 59)));
+                    ps.setBoolean(7, hoatDong);
+                    ps.setInt(8, khuyenMaiDangChon.getMaKhuyenMai());
+                    ps.executeUpdate();
+                    
+                    System.out.println("✅ Cập nhật khuyến mãi thành công");
+                    showAlert(Alert.AlertType.INFORMATION, "Cập nhật khuyến mãi thành công!");
+                    loadKhuyenMaiData();
+                }
             }
+        } catch (NumberFormatException e) {
+            System.out.println("❌ Lỗi định dạng số: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Mức giảm và đơn tối thiểu phải là số!");
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi thêm khuyến mãi: " + e.getMessage());
+            System.out.println("❌ Lỗi lưu khuyến mãi: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Lỗi lưu khuyến mãi: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -276,12 +469,17 @@ public class QLKhuyenMaiController implements Initializable {
             try (Connection conn = DBConnection.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 
-                ps.setInt(1, km.maKhuyenMai.get());
-                ps.executeUpdate();
+                ps.setInt(1, km.getMaKhuyenMai());
+                int affectedRows = ps.executeUpdate();
                 
-                showAlert(Alert.AlertType.INFORMATION, "Xóa khuyến mãi thành công!");
-                loadKhuyenMaiData();
+                if (affectedRows > 0) {
+                    System.out.println("✅ Xóa khuyến mãi thành công");
+                    showAlert(Alert.AlertType.INFORMATION, "Xóa khuyến mãi thành công!");
+                    loadKhuyenMaiData();
+                    themKhuyenMaiMoi();
+                }
             } catch (SQLException e) {
+                System.out.println("❌ Lỗi xóa khuyến mãi: " + e.getMessage());
                 showAlert(Alert.AlertType.ERROR, "Lỗi xóa khuyến mãi: " + e.getMessage());
             }
         }
@@ -293,6 +491,8 @@ public class QLKhuyenMaiController implements Initializable {
         String loai = cbLoaiKM.getValue();
         String trangThai = cbTrangThaiKM.getValue();
 
+        System.out.println("🔍 Tìm kiếm với từ khóa: " + keyword + ", loại: " + loai + ", trạng thái: " + trangThai);
+
         ObservableList<KhuyenMaiVM> filtered = khuyenMaiList.filtered(km -> {
             boolean matchKeyword = keyword.isEmpty() || km.getMaCode().toLowerCase().contains(keyword);
             boolean matchLoai = "Tất cả".equals(loai) || km.getKieuGiam().equals(loai);
@@ -303,6 +503,8 @@ public class QLKhuyenMaiController implements Initializable {
 
         tblKhuyenMai.setItems(filtered);
         lblTongKM.setText(filtered.size() + " KM");
+        
+        System.out.println("✅ Tìm thấy " + filtered.size() + " khuyến mãi");
     }
 
     private void showAlert(Alert.AlertType type, String message) {
