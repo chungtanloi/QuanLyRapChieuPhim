@@ -6,11 +6,14 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 
-import controllers.PhimController; // ⭐ BẮT BUỘC CÓ
-
+import java.io.File;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -27,11 +30,18 @@ public class ThemSuaphimController {
     @FXML private TextArea txtMoTa;
     @FXML private VBox vboxTheLoai;
 
+    // --- Poster trong dialog ---
+    @FXML private ImageView imgPoster;
+    @FXML private Button btnUploadPoster;
+
     // ===================== BIẾN NỘI BỘ =====================
     private film phimToEdit;
     private PhimController parentController;
 
     private List<CheckBox> theLoaiCheckBoxes = new ArrayList<>();
+
+    /** Đường dẫn ảnh hiện tại (URI) – sẽ lưu xuống cột poster_url */
+    private String currentPosterPath;
 
     private static final ObservableList<String> PHAN_LOAI_LIST = FXCollections.observableArrayList(
             "P", "T13", "T16", "T18"
@@ -41,6 +51,7 @@ public class ThemSuaphimController {
     public void initialize() {
         cbPhanLoai.setItems(PHAN_LOAI_LIST);
         loadTheLoaiFromDatabase();
+        setDefaultPoster();
     }
 
     public void setParentController(PhimController parentController) {
@@ -59,7 +70,7 @@ public class ThemSuaphimController {
 
         cbPhanLoai.getSelectionModel().select(phim.getPhanLoai());
 
-        // ⭐ Lấy Ngày phát hành + mô tả từ DB
+        // ⭐ Lấy Ngày phát hành + mô tả + poster từ DB
         loadOriginalPhimData(phim.getMaPhim());
 
         // ⭐ Load thể loại đã chọn
@@ -67,7 +78,7 @@ public class ThemSuaphimController {
     }
 
     private void loadOriginalPhimData(long maPhim) {
-        String sql = "SELECT ngay_phat_hanh, mo_ta FROM phim WHERE ma_phim = ?";
+        String sql = "SELECT ngay_phat_hanh, mo_ta, poster_url FROM phim WHERE ma_phim = ?";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -81,11 +92,24 @@ public class ThemSuaphimController {
 
                     String moTa = rs.getString("mo_ta");
                     txtMoTa.setText(moTa != null ? moTa : "");
+
+                    currentPosterPath = rs.getString("poster_url");
+                    if (currentPosterPath != null && !currentPosterPath.isBlank()) {
+                        try {
+                            Image img = new Image(currentPosterPath, true);
+                            imgPoster.setImage(img);
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                            setDefaultPoster();
+                        }
+                    } else {
+                        setDefaultPoster();
+                    }
                 }
             }
 
         } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể nạp ngày phát hành và mô tả.");
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể nạp dữ liệu phim.");
         }
     }
 
@@ -187,8 +211,9 @@ public class ThemSuaphimController {
             conn = DBConnection.getConnection();
             conn.setAutoCommit(false);
 
-            String sql = "INSERT INTO phim(ten_phim, thoi_luong_phut, phan_loai, ngay_phat_hanh, mo_ta) " +
-                    "VALUES (?, ?, ?, ?, ?)";
+            String sql =
+                "INSERT INTO phim(ten_phim, thoi_luong_phut, phan_loai, ngay_phat_hanh, mo_ta, poster_url) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
             PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
             ps.setString(1, tenPhim);
@@ -196,6 +221,7 @@ public class ThemSuaphimController {
             ps.setString(3, phanLoai);
             ps.setDate(4, Date.valueOf(ngayPhatHanh));
             ps.setString(5, moTa);
+            ps.setString(6, currentPosterPath); // ⭐ lưu poster_url
 
             ps.executeUpdate();
 
@@ -246,8 +272,8 @@ public class ThemSuaphimController {
             conn.setAutoCommit(false);
 
             String sql =
-                    "UPDATE phim SET ten_phim=?, thoi_luong_phut=?, phan_loai=?, ngay_phat_hanh=?, mo_ta=? " +
-                    "WHERE ma_phim=?";
+                    "UPDATE phim SET ten_phim=?, thoi_luong_phut=?, phan_loai=?, " +
+                    "ngay_phat_hanh=?, mo_ta=?, poster_url=? WHERE ma_phim=?";
 
             PreparedStatement ps = conn.prepareStatement(sql);
             ps.setString(1, tenPhim);
@@ -255,7 +281,8 @@ public class ThemSuaphimController {
             ps.setString(3, phanLoai);
             ps.setDate(4, Date.valueOf(ngayPhatHanh));
             ps.setString(5, moTa);
-            ps.setLong(6, id);
+            ps.setString(6, currentPosterPath);   // ⭐ cập nhật poster_url
+            ps.setLong(7, id);
             ps.executeUpdate();
 
             // Xóa TL cũ
@@ -292,6 +319,46 @@ public class ThemSuaphimController {
         }
     }
 
+    // ======================================================
+    //            UPLOAD POSTER TRONG DIALOG
+    // ======================================================
+    @FXML
+    private void handleUploadPoster() {
+        try {
+            Window window = imgPoster.getScene().getWindow();
+
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Chọn poster phim");
+            chooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Ảnh (*.png, *.jpg, *.jpeg)", "*.png", "*.jpg", "*.jpeg"),
+                    new FileChooser.ExtensionFilter("Tất cả file", "*.*")
+            );
+
+            File file = chooser.showOpenDialog(window);
+            if (file == null) return;
+
+            currentPosterPath = file.toURI().toString();
+            Image img = new Image(currentPosterPath, true);
+            imgPoster.setImage(img);
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Lỗi", "Không thể tải ảnh: " + ex.getMessage());
+        }
+    }
+
+    private void setDefaultPoster() {
+        try {
+            Image img = new Image(
+                getClass().getResource("/Application/image/cinema.png").toExternalForm(),
+                true
+            );
+            imgPoster.setImage(img);
+        } catch (Exception ex) {
+            imgPoster.setImage(null);
+        }
+    }
+
     // ================================
     //       HỦY
     // ================================
@@ -313,4 +380,3 @@ public class ThemSuaphimController {
         a.showAndWait();
     }
 }
-

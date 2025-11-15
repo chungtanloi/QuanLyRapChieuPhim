@@ -19,7 +19,9 @@
             <VBox styleClass="section-panel">
                 <HBox alignment="CENTER_LEFT" spacing="20">
                     <Label text="QUẢN LÝ THÔNG TIN PHIM">
-                        <font><Font size="24.0"/></font>
+                        <font>
+                            <Font size="24.0"/>
+                        </font>
                     </Label>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button fx:id="btnThemPhim" text="+ Thêm Mới" style="-fx-background-color: #4CAF50; -fx-text-fill:white;"
@@ -92,7 +94,9 @@
 
                 <Label text="THÔNG TIN CHI TIẾT PHIM"
                        style="-fx-font-weight:bold; -fx-text-fill:#4CAF50;">
-                    <font><Font size="18"/></font>
+                    <font>
+                        <Font size="18"/>
+                    </font>
                 </Label>
 
                 <HBox spacing="20">
@@ -105,7 +109,11 @@
                                     <Image url="@../Application/image/cinema.png"/>
                                 </image>
                             </ImageView>
-                            <Button text="Tải ảnh lên"/>
+                            <Button fx:id="btnUploadPoster"
+                                    mnemonicParsing="false"
+                                    text="Tải ảnh lên"
+                                    onAction="#handleUploadPoster" />
+
                         </children>
                     </VBox>
 

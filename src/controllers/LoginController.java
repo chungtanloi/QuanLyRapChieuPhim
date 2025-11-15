@@ -63,6 +63,10 @@ public class LoginController {
             loader = new FXMLLoader(getClass().getResource("/models/form.fxml"));
             view = loader.load();
 
+        } else if ("NHAN_VIEN".equalsIgnoreCase(role)) {
+            loader = new FXMLLoader(getClass().getResource("/models/STAFF_ORDER.fxml"));
+            view = loader.load();
+
         } 
         else {
             loader = new FXMLLoader(getClass().getResource("/models/customer_UI.fxml"));
