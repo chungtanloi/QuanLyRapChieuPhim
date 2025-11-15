@@ -17,7 +17,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
@@ -44,10 +43,6 @@ public class HomeController implements Initializable {
     @FXML private Label lblStaffInfo;
     @FXML private LineChart<String, Number> revenueChart;
     @FXML private BarChart<String, Number> topMoviesChart;
-    @FXML private BorderPane root;
-    @FXML private VBox sidebar;
-    @FXML private Button btnLogout;
-
     private Connection connection;
     private NumberFormat currencyFormat;
 
@@ -95,34 +90,41 @@ public class HomeController implements Initializable {
     }
 
     /**
-     * Tải tổng doanh thu và so sánh với tháng trước
+     * Tải tổng doanh thu và so sánh với năm trước
      */
     private void loadTotalRevenue() throws SQLException {
         String sql = "SELECT " +
-                     "  SUM(CASE WHEN MONTH(dat_luc) = MONTH(CURDATE()) AND YEAR(dat_luc) = YEAR(CURDATE()) " +
-                     "           THEN tong_tien ELSE 0 END) as doanh_thu_thang_nay, " +
-                     "  SUM(CASE WHEN MONTH(dat_luc) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
-                     "           AND YEAR(dat_luc) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
-                     "           THEN tong_tien ELSE 0 END) as doanh_thu_thang_truoc " +
+                     "  COALESCE(SUM(CASE WHEN YEAR(dat_luc) = YEAR(CURDATE()) " +
+                     "           THEN tong_tien ELSE 0 END), 0) as doanh_thu_nam_nay, " +
+                     "  COALESCE(SUM(CASE WHEN YEAR(dat_luc) = YEAR(CURDATE()) - 1 " +
+                     "           THEN tong_tien ELSE 0 END), 0) as doanh_thu_nam_truoc " +
                      "FROM don_hang " +
                      "WHERE trang_thai = 'DA_THANH_TOAN'";
         
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
-                double revenueThisMonth = rs.getDouble("doanh_thu_thang_nay");
-                double revenueLastMonth = rs.getDouble("doanh_thu_thang_truoc");
+                double revenueThisYear = rs.getDouble("doanh_thu_nam_nay");
+                double revenueLastYear = rs.getDouble("doanh_thu_nam_truoc");
                 
-                lblTotalRevenue.setText(currencyFormat.format(revenueThisMonth) + " ₫");
+                System.out.println("DEBUG - Doanh thu năm nay: " + revenueThisYear);
+                System.out.println("DEBUG - Doanh thu năm trước: " + revenueLastYear);
                 
-                if (revenueLastMonth > 0) {
-                    double change = ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100;
+                lblTotalRevenue.setText(currencyFormat.format(revenueThisYear) + " ₫");
+                
+                if (revenueLastYear > 0) {
+                    double change = ((revenueThisYear - revenueLastYear) / revenueLastYear) * 100;
                     String arrow = change >= 0 ? "↑" : "↓";
-                    lblRevenueChange.setText(String.format("%s %.1f%% so với tháng trước", arrow, Math.abs(change)));
+                    lblRevenueChange.setText(String.format("%s %.1f%% so với năm trước", arrow, Math.abs(change)));
                 } else {
-                    lblRevenueChange.setText("Tháng đầu tiên");
+                    lblRevenueChange.setText("Năm 2025");
                 }
             }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi load tổng doanh thu: " + e.getMessage());
+            e.printStackTrace();
+            lblTotalRevenue.setText("0 ₫");
+            lblRevenueChange.setText("Không có dữ liệu");
         }
     }
 
@@ -131,27 +133,26 @@ public class HomeController implements Initializable {
      */
     private void loadTotalTickets() throws SQLException {
         String sql = "SELECT " +
-                     "  COUNT(CASE WHEN MONTH(ban_luc) = MONTH(CURDATE()) AND YEAR(ban_luc) = YEAR(CURDATE()) " +
-                     "             THEN 1 END) as ve_thang_nay, " +
-                     "  COUNT(CASE WHEN MONTH(ban_luc) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
-                     "             AND YEAR(ban_luc) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) " +
-                     "             THEN 1 END) as ve_thang_truoc " +
+                     "  COUNT(CASE WHEN YEAR(ban_luc) = YEAR(CURDATE()) " +
+                     "             THEN 1 END) as ve_nam_nay, " +
+                     "  COUNT(CASE WHEN YEAR(ban_luc) = YEAR(CURDATE()) - 1 " +
+                     "             THEN 1 END) as ve_nam_truoc " +
                      "FROM ve WHERE trang_thai = 'DA_BAN'";
         
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             if (rs.next()) {
-                int ticketsThisMonth = rs.getInt("ve_thang_nay");
-                int ticketsLastMonth = rs.getInt("ve_thang_truoc");
+                int ticketsThisYear = rs.getInt("ve_nam_nay");
+                int ticketsLastYear = rs.getInt("ve_nam_truoc");
                 
-                lblTotalTickets.setText(currencyFormat.format(ticketsThisMonth));
+                lblTotalTickets.setText(currencyFormat.format(ticketsThisYear));
                 
-                if (ticketsLastMonth > 0) {
-                    double change = ((double)(ticketsThisMonth - ticketsLastMonth) / ticketsLastMonth) * 100;
+                if (ticketsLastYear > 0) {
+                    double change = ((double)(ticketsThisYear - ticketsLastYear) / ticketsLastYear) * 100;
                     String arrow = change >= 0 ? "↑" : "↓";
-                    lblTicketsChange.setText(String.format("%s %.1f%% so với tháng trước", arrow, Math.abs(change)));
+                    lblTicketsChange.setText(String.format("%s %.1f%% so với năm trước", arrow, Math.abs(change)));
                 } else {
-                    lblTicketsChange.setText("Tháng đầu tiên");
+                    lblTicketsChange.setText("Năm 2025");
                 }
             }
         }
@@ -162,8 +163,7 @@ public class HomeController implements Initializable {
      */
     private void loadTotalCustomers() throws SQLException {
         String sql = "SELECT COUNT(*) as total, " +
-                     "  SUM(CASE WHEN MONTH(tao_luc) = MONTH(CURDATE()) " +
-                     "           AND YEAR(tao_luc) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as new_customers " +
+                     "  SUM(CASE WHEN YEAR(tao_luc) = YEAR(CURDATE()) THEN 1 ELSE 0 END) as new_customers " +
                      "FROM khach_hang";
         
         try (Statement stmt = connection.createStatement();
@@ -173,7 +173,7 @@ public class HomeController implements Initializable {
                 int newCustomers = rs.getInt("new_customers");
                 
                 lblTotalCustomers.setText(currencyFormat.format(total));
-                lblCustomersChange.setText("↑ " + newCustomers + " khách hàng mới tháng này");
+                lblCustomersChange.setText("↑ " + newCustomers + " khách hàng mới năm nay");
             }
         }
     }
@@ -294,7 +294,6 @@ public class HomeController implements Initializable {
                         "JOIN suat_chieu sc ON v.ma_suat_chieu = sc.ma_suat_chieu " +
                         "JOIN phim p ON sc.ma_phim = p.ma_phim " +
                         "WHERE dh.trang_thai = 'DA_THANH_TOAN' " +
-                        "  AND MONTH(dh.dat_luc) = MONTH(CURDATE()) " +
                         "  AND YEAR(dh.dat_luc) = YEAR(CURDATE()) " +
                         "GROUP BY p.ma_phim, p.ten_phim " +
                         "ORDER BY doanh_thu DESC " +
@@ -323,53 +322,6 @@ public class HomeController implements Initializable {
             
         } catch (SQLException e) {
             e.printStackTrace();
-        }
-    }
-
-    /**
-     * Xử lý điều hướng giữa các trang
-     */
-    @FXML
-    private void handleNav(javafx.event.ActionEvent event) {
-        try {
-            Button btn = (Button) event.getSource();
-            String fxmlPath = (String) btn.getUserData();
-            
-            if (fxmlPath != null && !fxmlPath.isEmpty()) {
-                // Xóa class "active" khỏi tất cả các button trong sidebar
-                for (javafx.scene.Node node : sidebar.getChildren()) {
-                    if (node instanceof Button) {
-                        node.getStyleClass().remove("active");
-                    }
-                }
-                
-                // Thêm class "active" cho button được click
-                btn.getStyleClass().add("active");
-                
-                // Tải FXML mới
-                Parent newContent = FXMLLoader.load(getClass().getResource(fxmlPath));
-                root.setCenter(newContent);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert("Lỗi", "Không thể tải trang: " + e.getMessage(), Alert.AlertType.ERROR);
-        }
-    }
-
-    /**
-     * Xử lý đăng xuất
-     */
-    @FXML
-    private void onLogout(javafx.event.ActionEvent event) {
-        try {
-            // Tải lại trang đăng nhập
-            Parent loginRoot = FXMLLoader.load(getClass().getResource("/models/login.fxml"));
-            Stage stage = (Stage) btnLogout.getScene().getWindow();
-            stage.setScene(new Scene(loginRoot));
-            stage.show();
-        } catch (IOException e) {
-            e.printStackTrace();
-            showAlert("Lỗi", "Không thể đăng xuất: " + e.getMessage(), Alert.AlertType.ERROR);
         }
     }
 

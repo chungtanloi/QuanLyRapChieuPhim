@@ -15,7 +15,7 @@
 <?import javafx.scene.image.Image?>
 
 <BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" 
-            fx:controller="controllers.HomeController" styleClass="home-container" stylesheets="@styles_trangchu.css">
+            fx:controller="controllers.HomeController" styleClass="home-container" stylesheets="@styles.css">
     
     <top>
         <VBox spacing="10">
@@ -65,7 +65,7 @@
                                 <Font name="System Bold" size="24"/>
                             </font>
                         </Label>
-                        <Label fx:id="lblRevenueChange" text="↑ 0% so với tháng trước" styleClass="stat-change">
+                        <Label fx:id="lblRevenueChange" text="↑ 0% so với năm trước" styleClass="stat-change">
                             <font>
                                 <Font size="12"/>
                             </font>
