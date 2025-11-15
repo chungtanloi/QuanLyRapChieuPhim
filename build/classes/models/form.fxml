@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="root" prefHeight="671.0" prefWidth="911.0" style="-fx-background-color: #ffffffff;" styleClass="app" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.HomeController">
+<BorderPane fx:id="root" prefHeight="671.0" prefWidth="911.0" style="-fx-background-color: #ffffffff;" styleClass="app" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.FormController">
    <top>
       <HBox alignment="CENTER" prefHeight="82.0" prefWidth="765.0" spacing="12.0" style="-fx-background-color: #d32f2f;" styleClass="topbar" stylesheets="@styles.css" BorderPane.alignment="CENTER">
          <padding>
@@ -177,6 +177,18 @@
                         <Font size="20.0" />
                      </font>
                   </Button>
+                  <Button alignment="TOP_LEFT" layoutX="22.0" layoutY="399.0" mnemonicParsing="false" onAction="#handleNav" prefHeight="46.0" prefWidth="246.0" styleClass="nav-button" stylesheets="@styles.css" text="Quản lý hóa đơn" userData="/models/bill.fxml">
+                     <graphic>
+                        <ImageView fitHeight="20.0" fitWidth="20.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../Application/image/bill.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <font>
+                        <Font size="20.0" />
+                     </font>
+                  </Button>
                </children>
               
             </VBox>
@@ -190,7 +202,9 @@
       </VBox>
    </left>
    <center>
-  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" />
+  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+    <!-- Nội dung sẽ được load động từ FormController -->
+  </ScrollPane>
 </center>
 
    <bottom>

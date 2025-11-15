@@ -4,7 +4,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 
 DELIMITER $$
-
+DROP FUNCTION IF EXISTS tinh_gia_ve_theo_loai_khach;
 CREATE FUNCTION tinh_gia_ve_theo_loai_khach(
     p_ma_suat_chieu BIGINT UNSIGNED,
     p_ma_khach_hang BIGINT UNSIGNED

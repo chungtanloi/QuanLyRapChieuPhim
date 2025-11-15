@@ -1,260 +1,196 @@
-
 package controllers;
 
 import database.DBConnection;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.layout.HBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 
-/**
- * SeatPickerDialog (FIX): dùng setResultConverter để đảm bảo trả kết quả khi nhấn OK.
- * Hiển thị sơ đồ theo hang_ghe + so_ghe, chọn ghế SAN_SANG, tính tổng tiền.
- */
-public class SeatPickerDialog extends Dialog<SeatPickerDialog.Result> {
+public class SeatPickerDialog extends Stage {
 
-    public static class Result {
-        public final List<Integer> veIds;
-        public final long tongTien;
-        public Result(List<Integer> veIds, long tongTien) {
-            this.veIds = veIds; this.tongTien = tongTien;
-        }
-    }
-
-    private static class SeatCell {
-        int veId;
-        String hangGhe;
-        int soGhe;
-        String trangThai;
-        int giaBan;
-        int rowIndex;
-        int colIndex;
-        Button btn;
-        boolean selected = false;
-        String label() { return hangGhe + soGhe; }
-    }
-
-    private final int maSuatChieu;
+    private final int suatChieuId;
     private final String tenPhim;
+
     private final GridPane grid = new GridPane();
     private final Label lblTotal = new Label("0 đ");
-    private final List<SeatCell> allCells = new ArrayList<>();
 
-    public SeatPickerDialog(int maSuatChieu, String tenPhim) {
-        this.maSuatChieu = maSuatChieu;
+    private final Map<Integer, Button> seatButtons = new HashMap<>();
+    private final Set<Integer> selectedSeatIds = new HashSet<>();
+    private long giaVeCoBan = 0;
+
+    // KẾT QUẢ: danh sách ma_ghe đã chọn
+    public static class Result {
+        public final List<Integer> veIds;
+        public Result(List<Integer> ids) { this.veIds = ids; }
+    }
+
+    public SeatPickerDialog(int suatChieuId, String tenPhim) {
+        this.suatChieuId = suatChieuId;
         this.tenPhim = tenPhim;
 
-        setTitle("Chọn ghế cho suất #" + maSuatChieu);
-        DialogPane pane = getDialogPane();
-        pane.getButtonTypes().addAll(ButtonType.CANCEL, ButtonType.OK);
+        initModality(Modality.APPLICATION_MODAL);
+        setTitle("Chọn ghế – " + tenPhim);
 
-        BorderPane root = new BorderPane();
-        root.setPadding(new Insets(12));
+        VBox root = new VBox(15);
+        root.setPadding(new Insets(20));
+        root.setAlignment(Pos.TOP_CENTER);
+        root.setStyle("-fx-background-color: #f3f4f6;");
 
-        Label title = new Label("🎬 " + tenPhim + "  •  Suất #" + maSuatChieu);
-        title.getStyleClass().add("card-title");
-        root.setTop(title);
-        BorderPane.setMargin(title, new Insets(0,0,8,0));
+        Label lblTitle = new Label("Chọn ghế (click để chọn / bỏ chọn)");
+        lblTitle.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
 
-        ScrollPane sp = new ScrollPane(grid);
-        sp.setFitToWidth(true);
-        sp.setPrefViewportHeight(420);
-        root.setCenter(sp);
+        Label lblScreen = new Label("– MÀN HÌNH –");
+        lblScreen.setStyle("-fx-font-size: 16px; -fx-text-fill: #2563eb;");
 
-        HBox footer = new HBox(16);
-        footer.setAlignment(Pos.CENTER_LEFT);
-        footer.getChildren().addAll(makeLegend(), new Region(), new Label("Tổng:"), lblTotal);
-        HBox.setHgrow(footer.getChildren().get(1), Priority.ALWAYS);
-        root.setBottom(footer);
-        BorderPane.setMargin(footer, new Insets(8,0,0,0));
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setAlignment(Pos.CENTER);
 
-        pane.setContent(root);
+        // Legend
+        HBox legend = new HBox(20);
+        legend.setAlignment(Pos.CENTER);
+        legend.getChildren().addAll(
+                makeLegend("Còn trống", "#ffffff"),
+                makeLegend("Đang chọn", "#3b82f6"),
+                makeLegend("Đã bán", "#1f2937")
+        );
 
-        try {
-            loadSeats();
-            layoutGrid();
-        } catch (SQLException e) {
-            e.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, e.getMessage(), ButtonType.OK).showAndWait();
-        }
+        // Tổng tiền
+        HBox totalBox = new HBox(10);
+        totalBox.setAlignment(Pos.CENTER);
+        lblTotal.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: red;");
+        totalBox.getChildren().addAll(new Label("Tổng tiền:"), lblTotal);
 
-        // VALIDATE trước khi đóng: nếu chưa chọn ghế thì chặn
-        final Button okBtn = (Button) pane.lookupButton(ButtonType.OK);
-        okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, evt -> {
-            if (getSelectedIds().isEmpty()) {
-                evt.consume();
-                new Alert(Alert.AlertType.INFORMATION, "Bạn chưa chọn ghế nào.", ButtonType.OK).showAndWait();
-            }
+        Button btnOK = new Button("Xác nhận");
+        btnOK.setStyle("-fx-background-color: #16a34a; -fx-text-fill: white; -fx-padding: 10 20; -fx-font-size: 16px;");
+        btnOK.setOnAction(e -> {
+            this.setUserData(new Result(new ArrayList<>(selectedSeatIds)));
+            this.close();
         });
 
-        // Trả kết quả chuẩn bằng result converter
-        setResultConverter(button -> {
-    if (button == ButtonType.OK) {
-        List<Integer> ids = getSelectedIds();
-        long sum = getSelectedSum();
-        return new Result(ids, sum);
-    }
-    return null;
-});
+        root.getChildren().addAll(lblTitle, lblScreen, grid, legend, totalBox, btnOK);
 
+        loadSeatMap();
+
+        Scene scene = new Scene(root, 600, 700);
+        setScene(scene);
     }
 
-    private Node makeLegend() {
-        HBox box = new HBox(12);
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.getChildren().addAll(
-                legendItem("# Available", "-fx-background-color: -fx-card-bg; -fx-border-color: #94a3b8;"),
-                legendItem("# Selected", "-fx-background-color: #dbeafe; -fx-border-color: #1d4ed8;"),
-                legendItem("# Sold",     "-fx-background-color: #e5e7eb; -fx-text-fill: #9ca3af; -fx-border-color: #9ca3af;"),
-                legendItem("# Held",     "-fx-background-color: #fff1f2; -fx-border-color: #f43f5e;")
-        );
-        return box;
+    private HBox makeLegend(String text, String bg) {
+        Button box = new Button("  ");
+        box.setDisable(true);
+        box.setStyle("-fx-background-color: " + bg + "; -fx-border-color: #000; -fx-min-width:20; -fx-min-height:20;");
+        Label lb = new Label(text);
+        return new HBox(5, box, lb);
     }
 
-    private Node legendItem(String text, String style) {
-        HBox item = new HBox(6);
-        Rectangle r = new Rectangle(18,18);
-        r.setStyle(style);
-        item.setAlignment(Pos.CENTER_LEFT);
-        item.getChildren().addAll(r, new Text(text));
-        return item;
-    }
+    // ========================= LOAD SEAT MAP =============================
+    private void loadSeatMap() {
+        try (Connection c = DBConnection.getConnection()) {
 
-    private void loadSeats() throws SQLException {
-        String sql = """
-            SELECT v.ma_ve, v.trang_thai, v.gia_ban,
-                   g.hang_ghe, g.so_ghe
-            FROM ve v
-            JOIN ghe g ON g.ma_ghe = v.ma_ghe
-            WHERE v.ma_suat_chieu = ?
-            ORDER BY g.hang_ghe, g.so_ghe
-        """;
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement ps = c.prepareStatement(sql)) {
-            ps.setInt(1, maSuatChieu);
-            try (ResultSet rs = ps.executeQuery()) {
+            // 1. Giá vé cơ bản
+            try (PreparedStatement ps0 = c.prepareStatement(
+                    "SELECT gia_co_ban FROM suat_chieu WHERE ma_suat_chieu = ?")) {
+                ps0.setInt(1, suatChieuId);
+                ResultSet rs0 = ps0.executeQuery();
+                if (rs0.next()) giaVeCoBan = rs0.getLong(1);
+            }
+
+            // 2. Danh sách ghế: dùng hang_ghe, so_ghe
+            String sql = """
+                SELECT g.ma_ghe,
+                       g.hang_ghe,
+                       g.so_ghe,
+                       CASE WHEN dh.ma_don_hang IS NOT NULL THEN 1 ELSE 0 END AS da_ban
+                FROM ghe g
+                LEFT JOIN ve v
+                       ON v.ma_ghe = g.ma_ghe
+                      AND v.ma_suat_chieu = ?
+                LEFT JOIN don_ve dv ON dv.ma_ve = v.ma_ve
+                LEFT JOIN don_hang dh ON dh.ma_don_hang = dv.ma_don_hang
+                                     AND dh.trang_thai = 1
+                WHERE g.ma_phong = (SELECT ma_phong FROM suat_chieu WHERE ma_suat_chieu = ?)
+                ORDER BY g.hang_ghe, g.so_ghe
+            """;
+
+            try (PreparedStatement ps = c.prepareStatement(sql)) {
+                ps.setInt(1, suatChieuId);
+                ps.setInt(2, suatChieuId);
+
+                ResultSet rs = ps.executeQuery();
+
+                grid.getChildren().clear();
+                seatButtons.clear();
+                selectedSeatIds.clear();
+
                 while (rs.next()) {
-                    SeatCell sc = new SeatCell();
-                    sc.veId = rs.getInt("ma_ve");
-                    sc.trangThai = rs.getString("trang_thai");
-                    sc.giaBan = rs.getInt("gia_ban");
-                    sc.hangGhe = rs.getString("hang_ghe");
-                    sc.soGhe = rs.getInt("so_ghe");
-                    sc.rowIndex = lettersToIndex(sc.hangGhe);
-                    sc.colIndex = sc.soGhe;
-                    allCells.add(sc);
+                    int maGhe = rs.getInt("ma_ghe");
+                    String hang = rs.getString("hang_ghe");
+                    int so = rs.getInt("so_ghe");
+                    boolean daBan = rs.getInt("da_ban") == 1;
+
+                    String seatLabel = hang + so;
+
+                    Button btn = new Button(seatLabel);
+                    btn.setMinSize(45, 40);
+                    btn.setStyle(defaultSeatStyle(daBan));
+
+                    if (daBan) {
+                        btn.setDisable(true);
+                    }
+
+                    final boolean isSold = daBan;
+                    btn.setOnAction(e -> {
+                        if (isSold) return;
+
+                        if (selectedSeatIds.contains(maGhe)) {
+                            selectedSeatIds.remove(maGhe);
+                            btn.setStyle(defaultSeatStyle(false));
+                        } else {
+                            selectedSeatIds.add(maGhe);
+                            btn.setStyle("-fx-background-color: #3b82f6; -fx-text-fill:white; -fx-font-weight:bold; -fx-border-color:black;");
+                        }
+                        updateTotal();
+                    });
+
+                    seatButtons.put(maGhe, btn);
+
+                    // Sắp xếp ghế theo đúng hàng / cột
+                    int rowIndex = 0;
+                    if (hang != null && !hang.isEmpty()) {
+                        rowIndex = Character.toUpperCase(hang.charAt(0)) - 'A';
+                        if (rowIndex < 0) rowIndex = 0;
+                    }
+                    int colIndex = Math.max(0, so - 1);
+
+                    grid.add(btn, colIndex, rowIndex);
                 }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
-    private void layoutGrid() {
-        grid.getChildren().clear();
-        grid.setHgap(8);
-        grid.setVgap(8);
-        grid.setPadding(new Insets(12));
-
-        int maxRow = 0, maxCol = 0;
-        for (SeatCell s : allCells) {
-            maxRow = Math.max(maxRow, s.rowIndex);
-            maxCol = Math.max(maxCol, s.colIndex);
-        }
-
-        // Header cột
-        for (int c = 1; c <= maxCol; c++) {
-            Label lbl = new Label(String.valueOf(c));
-            lbl.getStyleClass().add("muted");
-            grid.add(lbl, c, 0);
-        }
-
-        // Ô ghế + header hàng
-        Set<Integer> headerRows = new HashSet<>();
-        for (SeatCell s : allCells) {
-            if (!headerRows.contains(s.rowIndex)) {
-                Label lblRow = new Label(indexToLetters(s.rowIndex));
-                lblRow.getStyleClass().add("muted");
-                grid.add(lblRow, 0, s.rowIndex);
-                headerRows.add(s.rowIndex);
-            }
-            Button b = new Button(s.label());
-            b.setPrefWidth(46);
-            b.setMinHeight(34);
-            b.setMaxHeight(34);
-            b.setFocusTraversable(false);
-            styleSeat(b, s.trangThai, false);
-            final SeatCell ref = s;
-            b.setOnAction(e -> toggleSeat(ref));
-            s.btn = b;
-            grid.add(b, s.colIndex, s.rowIndex);
-        }
-    }
-
-    private void toggleSeat(SeatCell s) {
-        if (!"SAN_SANG".equalsIgnoreCase(s.trangThai)) return;
-        s.selected = !s.selected;
-        styleSeat(s.btn, s.trangThai, s.selected);
-        updateTotalLabel();
-    }
-
-    private void styleSeat(Button b, String status, boolean selected) {
-        String base = "-fx-background-radius: 8; -fx-border-radius: 8; -fx-border-width: 1; -fx-padding: 6 10;";
-        if ("SAN_SANG".equalsIgnoreCase(status)) {
-            if (selected) b.setStyle(base + " -fx-background-color: #dbeafe; -fx-border-color: #1d4ed8;");
-            else          b.setStyle(base + " -fx-background-color: -fx-card-bg; -fx-border-color: #94a3b8;");
-            b.setDisable(false);
-        } else if ("DA_BAN".equalsIgnoreCase(status)) {
-            b.setStyle(base + " -fx-background-color: #e5e7eb; -fx-text-fill: #9ca3af; -fx-border-color: #9ca3af;");
-            b.setDisable(true);
+    private String defaultSeatStyle(boolean sold) {
+        if (sold) {
+            return "-fx-background-color:#1f2937; -fx-text-fill:white; -fx-border-color:black;";
         } else {
-            b.setStyle(base + " -fx-background-color: #fff1f2; -fx-border-color: #f43f5e;");
-            b.setDisable(true);
+            return "-fx-background-color:white; -fx-text-fill:black; -fx-border-color:black;";
         }
     }
 
-    private void updateTotalLabel() {
-        long sum = getSelectedSum();
-        lblTotal.setText(String.format("%,d đ", sum));
-    }
-
-    private long getSelectedSum() {
-        long s = 0;
-        for (SeatCell c : allCells) if (c.selected) s += c.giaBan;
-        return s;
-    }
-
-    private List<Integer> getSelectedIds() {
-        List<Integer> ids = new ArrayList<>();
-        for (SeatCell c : allCells) if (c.selected) ids.add(c.veId);
-        return ids;
-    }
-
-    private static int lettersToIndex(String letters) {
-        if (letters == null) return 1;
-        String s = letters.trim().toUpperCase();
-        int n = 0;
-        for (int i = 0; i < s.length(); i++) {
-            n = n * 26 + (s.charAt(i) - 'A' + 1);
-        }
-        return Math.max(n, 1);
-    }
-
-    private static String indexToLetters(int idx) {
-        StringBuilder sb = new StringBuilder();
-        int n = Math.max(idx, 1);
-        while (n > 0) {
-            int r = (n - 1) % 26;
-            sb.insert(0, (char) ('A' + r));
-            n = (n - 1) / 26;
-        }
-        return sb.toString();
+    private void updateTotal() {
+        long total = selectedSeatIds.size() * giaVeCoBan;
+        lblTotal.setText(String.format("%,d đ", total));
     }
 }

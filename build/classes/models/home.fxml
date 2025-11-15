@@ -1,103 +1,281 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.BarChart?>
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.LineChart?>
 <?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.chart.PieChart?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.NumberAxis?>
-<?import javafx.scene.chart.PieChart?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
-<ScrollPane fitToWidth="true" prefHeight="433.0" prefWidth="498.0" style="-fx-padding:16;" stylesheets="@styles.css" BorderPane.alignment="CENTER" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.HomeController"
->
-            <content>
-                <!-- Đặt thẳng VBox làm content; bên trong là 2 GridPane -->
-                <VBox fillWidth="true" prefHeight="378.0" prefWidth="218.0" spacing="20" styleClass="content-area">
-                    
-
-                    <!-- Hàng 1: 3 card -->
-                    <GridPane hgap="20" maxWidth="Infinity" vgap="20">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="33.33" />
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="33.33" />
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="33.33" />
-                        </columnConstraints>
-                        <rowConstraints>
-                            <RowConstraints />
-                        </rowConstraints>
-                        <children>
-                            <StackPane maxWidth="Infinity" styleClass="stat-card" GridPane.hgrow="ALWAYS">
-                                <VBox alignment="CENTER" spacing="6">
-                                    <Label styleClass="stat-title" text="Tổng doanh thu" />
-                                    <Label fx:id="lblDoanhThuHomNay" styleClass="stat-value" text="₫0" />
-                                </VBox>
-                            </StackPane>
-                            <StackPane maxWidth="Infinity" styleClass="stat-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
-                                <VBox alignment="CENTER" spacing="6">
-                                    <Label styleClass="stat-title" text="Vé bán ra" />
-                                    <Label fx:id="lblTongVeBan" styleClass="stat-value" text="0" />
-                                </VBox>
-                            </StackPane>
-                            <StackPane maxWidth="Infinity" styleClass="stat-card" GridPane.columnIndex="2" GridPane.hgrow="ALWAYS">
-                                <VBox alignment="CENTER" spacing="6">
-                                    <Label styleClass="stat-title" text="Tỉ lệ lấp đầy" />
-                                    <Label fx:id="lblTiLeLapDay" styleClass="stat-value" text="0%" />
-                                </VBox>
-                            </StackPane>
-                        </children>
-                    </GridPane>
-
-                    <!-- Hàng 2: Biểu đồ 60/40 -->
-                    <GridPane hgap="20" maxWidth="Infinity" vgap="20">
-                        <columnConstraints>
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="60" />
-                            <ColumnConstraints hgrow="ALWAYS" percentWidth="40" />
-                        </columnConstraints>
-                        <rowConstraints>
-                            <RowConstraints />
-                        </rowConstraints>
-                        <children>
-                            <StackPane maxWidth="Infinity" styleClass="chart-card" GridPane.hgrow="ALWAYS">
-                                <VBox spacing="8">
-                                    <Label styleClass="chart-title" text="Doanh thu 7 ngày gần nhất" />
-                                    <LineChart fx:id="chartDoanhThu"
-                                               prefHeight="250.0" prefWidth="400.0"
-                                               
-                                               createSymbols="false"
-                                               legendVisible="false">
-                                        <xAxis>
-                                            <CategoryAxis fx:id="xAxisDoanhThu" label="Ngày" side="BOTTOM" />
-                                        </xAxis>
-                                        <yAxis>
-                                            <NumberAxis fx:id="yAxisDoanhThu" label="Doanh thu (VNĐ)" side="LEFT" />
-                                        </yAxis>
-                                    </LineChart>
-                                </VBox>
-
-                            </StackPane>
-
-                            <StackPane maxWidth="Infinity" styleClass="chart-card" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS">
-                                <VBox spacing="8">
-                                    <Label styleClass="chart-title" text="Doanh thu theo phim" />
-                     <PieChart fx:id="chartPhanBoPhim" />
-                                </VBox>
-                            </StackPane>
-                        </children>
-                    </GridPane>
+<BorderPane xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" 
+<<<<<<< HEAD
+            fx:controller="controllers.HomeController" styleClass="home-container" stylesheets="@styles_trangchu.css">
+=======
+            fx:controller="controllers.HomeController" styleClass="home-container" stylesheets="@styles.css">
+>>>>>>> 161f25697c2411bfe323c2de448b911c31069413
+    
+    <top>
+        <VBox spacing="10">
+            <padding>
+                <Insets top="20" right="20" bottom="10" left="20"/>
+            </padding>
+            <Label text="TRANG CHỦ" styleClass="page-title">
+                <font>
+                    <Font name="System Bold" size="28"/>
+                </font>
+            </Label>
+            <Label fx:id="lblWelcome" text="Xin chào, Quản trị viên!" styleClass="welcome-text">
+                <font>
+                    <Font size="16"/>
+                </font>
+            </Label>
+        </VBox>
+    </top>
+    
+    <center>
+        <VBox spacing="20">
+            <padding>
+                <Insets top="10" right="20" bottom="20" left="20"/>
+            </padding>
+            
+            <!-- Thẻ thống kê tổng quan -->
+            <GridPane hgap="15" vgap="15">
+                <!-- Tổng doanh thu -->
+                <HBox styleClass="stat-card, card-blue" spacing="15" alignment="CENTER_LEFT" 
+                      prefHeight="120" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                        <image>
+                            <Image url="@../Application/image/chart.png"/>
+                        </image>
+                    </ImageView>
+                    <VBox spacing="5">
+                        <Label text="Tổng doanh thu" styleClass="stat-label">
+                            <font>
+                                <Font size="14"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTotalRevenue" text="0 ₫" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="24"/>
+                            </font>
+                        </Label>
+<<<<<<< HEAD
+                        <Label fx:id="lblRevenueChange" text="↑ 0% so với tháng trước" styleClass="stat-change">
+=======
+                        <Label fx:id="lblRevenueChange" text="↑ 0% so với năm trước" styleClass="stat-change">
+>>>>>>> 161f25697c2411bfe323c2de448b911c31069413
+                            <font>
+                                <Font size="12"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+                
+                <!-- Số vé đã bán -->
+                <HBox styleClass="stat-card, card-green" spacing="15" alignment="CENTER_LEFT" 
+                      prefHeight="120" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                        <image>
+                            <Image url="@../Application/image/video.png"/>
+                        </image>
+                    </ImageView>
+                    <VBox spacing="5">
+                        <Label text="Vé đã bán" styleClass="stat-label">
+                            <font>
+                                <Font size="14"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTotalTickets" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="24"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTicketsChange" text="↑ 0% so với tháng trước" styleClass="stat-change">
+                            <font>
+                                <Font size="12"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+                
+                <!-- Số khách hàng -->
+                <HBox styleClass="stat-card, card-orange" spacing="15" alignment="CENTER_LEFT" 
+                      prefHeight="120" GridPane.columnIndex="2" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                        <image>
+                            <Image url="@../Application/image/support.png"/>
+                        </image>
+                    </ImageView>
+                    <VBox spacing="5">
+                        <Label text="Khách hàng" styleClass="stat-label">
+                            <font>
+                                <Font size="14"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTotalCustomers" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="24"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblCustomersChange" text="↑ 0 khách hàng mới" styleClass="stat-change">
+                            <font>
+                                <Font size="12"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+                
+                <!-- Số phim đang chiếu -->
+                <HBox styleClass="stat-card, card-purple" spacing="15" alignment="CENTER_LEFT" 
+                      prefHeight="120" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                        <image>
+                            <Image url="@../Application/image/film-reel.png"/>
+                        </image>
+                    </ImageView>
+                    <VBox spacing="5">
+                        <Label text="Phim đang chiếu" styleClass="stat-label">
+                            <font>
+                                <Font size="14"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTotalMovies" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="24"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblMoviesInfo" text="Trong 0 phòng chiếu" styleClass="stat-change">
+                            <font>
+                                <Font size="12"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+                
+                <!-- Suất chiếu hôm nay -->
+                <HBox styleClass="stat-card, card-red" spacing="15" alignment="CENTER_LEFT" 
+                      prefHeight="120" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                        <image>
+                            <Image url="@../Application/image/cinema-screen.png"/>
+                        </image>
+                    </ImageView>
+                    <VBox spacing="5">
+                        <Label text="Suất chiếu hôm nay" styleClass="stat-label">
+                            <font>
+                                <Font size="14"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTodayScreenings" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="24"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblScreeningsInfo" text="0 suất đang mở bán" styleClass="stat-change">
+                            <font>
+                                <Font size="12"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+                
+                <!-- Nhân viên -->
+                <HBox styleClass="stat-card, card-teal" spacing="15" alignment="CENTER_LEFT" 
+                      prefHeight="120" GridPane.columnIndex="2" GridPane.rowIndex="1">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <ImageView fitHeight="50" fitWidth="50" preserveRatio="true">
+                        <image>
+                            <Image url="@../Application/image/management.png"/>
+                        </image>
+                    </ImageView>
+                    <VBox spacing="5">
+                        <Label text="Nhân viên" styleClass="stat-label">
+                            <font>
+                                <Font size="14"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblTotalStaff" text="0" styleClass="stat-value">
+                            <font>
+                                <Font name="System Bold" size="24"/>
+                            </font>
+                        </Label>
+                        <Label fx:id="lblStaffInfo" text="Đang hoạt động" styleClass="stat-change">
+                            <font>
+                                <Font size="12"/>
+                            </font>
+                        </Label>
+                    </VBox>
+                </HBox>
+            </GridPane>
+            
+            <!-- Biểu đồ -->
+            <GridPane hgap="15" vgap="15">
+                <!-- Biểu đồ doanh thu 7 ngày -->
+                <VBox styleClass="chart-container" spacing="10" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <Label text="Doanh thu 7 ngày qua" styleClass="chart-title">
+                        <font>
+                            <Font name="System Bold" size="16"/>
+                        </font>
+                    </Label>
+                    <LineChart fx:id="revenueChart" prefHeight="300" legendVisible="false">
+                        <xAxis>
+                            <CategoryAxis side="BOTTOM" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis side="LEFT" />
+                        </yAxis>
+                    </LineChart>
                 </VBox>
-            </content>
-        </ScrollPane>
+                
+                <!-- Biểu đồ top phim -->
+                <VBox styleClass="chart-container" spacing="10" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="20" right="20" bottom="20" left="20"/>
+                    </padding>
+                    <Label text="Top 5 phim có doanh thu cao nhất" styleClass="chart-title">
+                        <font>
+                            <Font name="System Bold" size="16"/>
+                        </font>
+                    </Label>
+                    <BarChart fx:id="topMoviesChart" prefHeight="300" legendVisible="false">
+                        <xAxis>
+                            <CategoryAxis side="BOTTOM" />
+                        </xAxis>
+                        <yAxis>
+                            <NumberAxis side="LEFT" />
+                        </yAxis>
+                    </BarChart>
+                </VBox>
+            </GridPane>
+            
+        </VBox>
+    </center>
+    
+</BorderPane>
