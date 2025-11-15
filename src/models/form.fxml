@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="root" prefHeight="671.0" prefWidth="911.0" style="-fx-background-color: #ffffffff;" styleClass="app" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.HomeController">
+<BorderPane fx:id="root" prefHeight="671.0" prefWidth="911.0" style="-fx-background-color: #ffffffff;" styleClass="app" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/25" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.FormController">
    <top>
       <HBox alignment="CENTER" prefHeight="82.0" prefWidth="765.0" spacing="12.0" style="-fx-background-color: #d32f2f;" styleClass="topbar" stylesheets="@styles.css" BorderPane.alignment="CENTER">
          <padding>
@@ -190,7 +190,9 @@
       </VBox>
    </left>
    <center>
-  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" />
+  <ScrollPane fx:id="scroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED">
+    <!-- Nội dung sẽ được load động từ FormController -->
+  </ScrollPane>
 </center>
 
    <bottom>
