@@ -15,17 +15,17 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
-
+import java.util.Locale;
+import java.util.ResourceBundle;
 public class HomeController implements Initializable {
 
     @FXML private Label lblWelcome;
@@ -93,40 +93,49 @@ public class HomeController implements Initializable {
      * Tải tổng doanh thu và so sánh với năm trước
      */
     private void loadTotalRevenue() throws SQLException {
-        String sql = "SELECT " +
-                     "  COALESCE(SUM(CASE WHEN YEAR(dat_luc) = YEAR(CURDATE()) " +
-                     "           THEN tong_tien ELSE 0 END), 0) as doanh_thu_nam_nay, " +
-                     "  COALESCE(SUM(CASE WHEN YEAR(dat_luc) = YEAR(CURDATE()) - 1 " +
-                     "           THEN tong_tien ELSE 0 END), 0) as doanh_thu_nam_truoc " +
-                     "FROM don_hang " +
-                     "WHERE trang_thai = 'DA_THANH_TOAN'";
+    // Tính doanh thu từ đầu năm đến hiện tại
+    LocalDate startOfYear = LocalDate.of(LocalDate.now().getYear(), 1, 1);
+    LocalDate today = LocalDate.now();
+    
+    // Tính doanh thu năm trước (cùng kỳ)
+    LocalDate startOfLastYear = startOfYear.minusYears(1);
+    LocalDate endOfLastYear = today.minusYears(1);
+    
+    String sql = "SELECT " +
+                 "  fn_tinh_doanh_thu(?, ?) as doanh_thu_nam_nay, " +
+                 "  fn_tinh_doanh_thu(?, ?) as doanh_thu_nam_truoc";
+    
+    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        ps.setDate(1, Date.valueOf(startOfYear));
+        ps.setDate(2, Date.valueOf(today));
+        ps.setDate(3, Date.valueOf(startOfLastYear));
+        ps.setDate(4, Date.valueOf(endOfLastYear));
         
-        try (Statement stmt = connection.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-            if (rs.next()) {
-                double revenueThisYear = rs.getDouble("doanh_thu_nam_nay");
-                double revenueLastYear = rs.getDouble("doanh_thu_nam_truoc");
-                
-                System.out.println("DEBUG - Doanh thu năm nay: " + revenueThisYear);
-                System.out.println("DEBUG - Doanh thu năm trước: " + revenueLastYear);
-                
-                lblTotalRevenue.setText(currencyFormat.format(revenueThisYear) + " ₫");
-                
-                if (revenueLastYear > 0) {
-                    double change = ((revenueThisYear - revenueLastYear) / revenueLastYear) * 100;
-                    String arrow = change >= 0 ? "↑" : "↓";
-                    lblRevenueChange.setText(String.format("%s %.1f%% so với năm trước", arrow, Math.abs(change)));
-                } else {
-                    lblRevenueChange.setText("Năm 2025");
-                }
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            double revenueThisYear = rs.getDouble("doanh_thu_nam_nay");
+            double revenueLastYear = rs.getDouble("doanh_thu_nam_truoc");
+            
+            System.out.println("DEBUG - Doanh thu năm nay: " + revenueThisYear);
+            System.out.println("DEBUG - Doanh thu năm trước: " + revenueLastYear);
+            
+            lblTotalRevenue.setText(currencyFormat.format(revenueThisYear) + " ₫");
+            
+            if (revenueLastYear > 0) {
+                double change = ((revenueThisYear - revenueLastYear) / revenueLastYear) * 100;
+                String arrow = change >= 0 ? "↑" : "↓";
+                lblRevenueChange.setText(String.format("%s %.1f%% so với năm trước", arrow, Math.abs(change)));
+            } else {
+                lblRevenueChange.setText("Năm 2025");
             }
-        } catch (SQLException e) {
-            System.err.println("Lỗi khi load tổng doanh thu: " + e.getMessage());
-            e.printStackTrace();
-            lblTotalRevenue.setText("0 ₫");
-            lblRevenueChange.setText("Không có dữ liệu");
         }
+    } catch (SQLException e) {
+        System.err.println("Lỗi khi load tổng doanh thu: " + e.getMessage());
+        e.printStackTrace();
+        lblTotalRevenue.setText("0 ₫");
+        lblRevenueChange.setText("Không có dữ liệu");
     }
+}
 
     /**
      * Tải tổng số vé đã bán

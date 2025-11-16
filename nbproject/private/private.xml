@@ -6,13 +6,11 @@
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/LoginController.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/Application/Main.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/SeatPickerDialog.java</file>
-            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/NhanVienController.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/database/DBConnection.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/nhanvien.fxml</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/HomeController.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/styles_nv.css</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/DonHang.java</file>
-            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/CustomerController.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/CinemaController.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/cinema.fxml</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/staff.fxml</file>
@@ -21,6 +19,32 @@
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/customer.fxml</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/Customer_mnController.java</file>
             <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/form.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/screeningrate.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/ThemSuaphimController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/product.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/sale.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/QLSanPhamController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/SuatChieuController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/LichChieuController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/suat_chieuController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/ThemSuasuat_chieuController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/phim.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/film.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/film.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/home.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/bill.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/BillController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/statistics.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/Application/image/vocher.png</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/HoaDonController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/StaffOrderController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/BillExporter.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/models/STAFF_ORDER.fxml</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/FormController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/FilmController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/FilmDialogController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/PhimController.java</file>
+            <file>file:/E:/QLRapChieuPhim/QuanLyRapChieuPhim/src/controllers/SignupController.java</file>
         </group>
     </open-files>
 </project-private>

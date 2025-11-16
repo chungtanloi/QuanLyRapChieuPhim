@@ -23,7 +23,7 @@ BEGIN
     
     SELECT COALESCE(SUM(tong_tien), 0) INTO v_doanh_thu
     FROM don_hang
-    WHERE trang_thai = 'DA_THANH_TOAN'
+    WHERE trang_thai = 1
     AND DATE(dat_luc) BETWEEN p_tu_ngay AND p_den_ngay;
     
     RETURN v_doanh_thu;
@@ -130,3 +130,4 @@ BEGIN
 END$$
 
 DELIMITER ;
+select * from don_hang;

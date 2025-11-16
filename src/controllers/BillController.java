@@ -162,30 +162,36 @@ public class BillController {
     }
 
     private void updateStatistics() {
-        String sql = """
-            SELECT COUNT(*) AS tong,
-                   SUM(CASE WHEN trang_thai = 1 THEN tong_tien ELSE 0 END) AS doanh_thu
-            FROM don_hang
-            WHERE tao_luc BETWEEN ? AND ?
-        """;
+    String sql = """
+        SELECT 
+            COUNT(*) AS tong,
+            fn_tinh_doanh_thu(DATE(?), DATE(?)) AS doanh_thu
+        FROM don_hang
+        WHERE DATE(tao_luc) BETWEEN DATE(?) AND DATE(?)
+    """;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    try (Connection conn = DBConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setTimestamp(1, Timestamp.valueOf(dpFrom.getValue().atStartOfDay()));
-            ps.setTimestamp(2, Timestamp.valueOf(LocalDateTime.of(dpTo.getValue(), java.time.LocalTime.MAX)));
+        Date fromDate = Date.valueOf(dpFrom.getValue());
+        Date toDate = Date.valueOf(dpTo.getValue());
+        
+        ps.setDate(1, fromDate);
+        ps.setDate(2, toDate);
+        ps.setDate(3, fromDate);
+        ps.setDate(4, toDate);
 
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                lblTongHoaDon.setText(String.valueOf(rs.getInt("tong")));
-                lblTongDoanhThu.setText(String.format("%,.0f đ",
-                        rs.getBigDecimal("doanh_thu") != null ? rs.getBigDecimal("doanh_thu") : BigDecimal.ZERO));
-            }
-
-        } catch (Exception e) {
-            showError("Không thể cập nhật thống kê", e);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            lblTongHoaDon.setText(String.valueOf(rs.getInt("tong")));
+            lblTongDoanhThu.setText(String.format("%,.0f đ",
+                    rs.getBigDecimal("doanh_thu") != null ? rs.getBigDecimal("doanh_thu") : BigDecimal.ZERO));
         }
+
+    } catch (Exception e) {
+        showError("Không thể cập nhật thống kê", e);
     }
+}
 
     // ================== ACTION BUTTON ==================
     private void setupActionButtons() {

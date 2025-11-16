@@ -14,3 +14,4 @@ BEGIN
         SET MESSAGE_TEXT = 'Mã khuyến mãi đã tồn tại';
     END IF;
 END //
+select *from tai_khoan;

@@ -181,49 +181,50 @@ SELECT 6, hang, so, 2 FROM (
 ) seats;
 
 -- 11) SUAT_CHIEU
+-- 11) SUAT_CHIEU (Dữ liệu 2025)
 INSERT IGNORE INTO suat_chieu (ma_phim, ma_phong, ma_dinh_dang, bat_dau_luc, ket_thuc_luc, gia_co_ban, trang_thai) VALUES
--- 16/11/2024
-(1, 1, 2, '2024-11-16 09:00:00', '2024-11-16 12:01:00',  80000, 'MO_BAN'),
-(2, 2, 1, '2024-11-16 09:30:00', '2024-11-16 11:40:00',  75000, 'MO_BAN'),
-(3, 3, 2, '2024-11-16 10:00:00', '2024-11-16 11:34:00',  70000, 'MO_BAN'),
-(4, 4, 3, '2024-11-16 10:30:00', '2024-11-16 13:16:00', 120000, 'MO_BAN'),
-(1, 1, 2, '2024-11-16 13:00:00', '2024-11-16 16:01:00',  90000, 'MO_BAN'),
-(5, 2, 1, '2024-11-16 14:00:00', '2024-11-16 15:36:00',  75000, 'MO_BAN'),
-(6, 6, 1, '2024-11-16 15:00:00', '2024-11-16 17:08:00',  85000, 'MO_BAN'),
-(7, 3, 1, '2024-11-16 16:00:00', '2024-11-16 17:54:00',  80000, 'MO_BAN'),
-(8, 4, 4, '2024-11-16 17:00:00', '2024-11-16 18:55:00', 100000, 'MO_BAN'),
-(1, 1, 2, '2024-11-16 19:00:00', '2024-11-16 22:01:00', 100000, 'MO_BAN'),
-(9, 2, 1, '2024-11-16 20:00:00', '2024-11-16 22:18:00',  85000, 'MO_BAN'),
-(6, 6, 1, '2024-11-16 21:00:00', '2024-11-16 23:08:00',  90000, 'MO_BAN'),
--- 17/11/2024
-(2, 1, 1, '2024-11-17 09:00:00', '2024-11-17 11:10:00',  75000, 'MO_BAN'),
-(3, 3, 2, '2024-11-17 10:00:00', '2024-11-17 11:34:00',  70000, 'MO_BAN'),
-(5, 2, 1, '2024-11-17 11:30:00', '2024-11-17 13:06:00',  75000, 'MO_BAN'),
-(4, 7, 3, '2024-11-17 13:00:00', '2024-11-17 15:46:00', 150000, 'MO_BAN'),
-(1, 1, 2, '2024-11-17 14:00:00', '2024-11-17 17:01:00',  90000, 'MO_BAN'),
-(8, 4, 4, '2024-11-17 15:30:00', '2024-11-17 17:25:00', 100000, 'MO_BAN'),
-(6, 6, 1, '2024-11-17 18:00:00', '2024-11-17 20:08:00',  85000, 'MO_BAN'),
-(9, 2, 1, '2024-11-17 19:00:00', '2024-11-17 21:18:00',  90000, 'MO_BAN'),
-(1, 1, 2, '2024-11-17 20:00:00', '2024-11-17 23:01:00', 110000, 'MO_BAN');
+-- 16/11/2025
+(1,1,2,'2025-11-16 09:00:00','2025-11-16 12:01:00',80000,'MO_BAN'),
+(2,2,1,'2025-11-16 09:30:00','2025-11-16 11:40:00',75000,'MO_BAN'),
+(3,3,2,'2025-11-16 10:00:00','2025-11-16 11:34:00',70000,'MO_BAN'),
+(4,4,3,'2025-11-16 10:30:00','2025-11-16 13:16:00',120000,'MO_BAN'),
+(1,1,2,'2025-11-16 13:00:00','2025-11-16 16:01:00',90000,'MO_BAN'),
+(5,2,1,'2025-11-16 14:00:00','2025-11-16 15:36:00',75000,'MO_BAN'),
+(6,6,1,'2025-11-16 15:00:00','2025-11-16 17:08:00',85000,'MO_BAN'),
+(7,3,1,'2025-11-16 16:00:00','2025-11-16 17:54:00',80000,'MO_BAN'),
+(8,4,4,'2025-11-16 17:00:00','2025-11-16 18:55:00',100000,'MO_BAN'),
+(1,1,2,'2025-11-16 19:00:00','2025-11-16 22:01:00',100000,'MO_BAN'),
+(9,2,1,'2025-11-16 20:00:00','2025-11-16 22:18:00',85000,'MO_BAN'),
+(6,6,1,'2025-11-16 21:00:00','2025-11-16 23:08:00',90000,'MO_BAN'),
+-- 17/11/2025
+(2,1,1,'2025-11-17 09:00:00','2025-11-17 11:10:00',75000,'MO_BAN'),
+(3,3,2,'2025-11-17 10:00:00','2025-11-17 11:34:00',70000,'MO_BAN'),
+(5,2,1,'2025-11-17 11:30:00','2025-11-17 13:06:00',75000,'MO_BAN'),
+(4,7,3,'2025-11-17 13:00:00','2025-11-17 15:46:00',150000,'MO_BAN'),
+(1,1,2,'2025-11-17 14:00:00','2025-11-17 17:01:00',90000,'MO_BAN'),
+(8,4,4,'2025-11-17 15:30:00','2025-11-17 17:25:00',100000,'MO_BAN'),
+(6,6,1,'2025-11-17 18:00:00','2025-11-17 20:08:00',85000,'MO_BAN'),
+(9,2,1,'2025-11-17 19:00:00','2025-11-17 21:18:00',90000,'MO_BAN'),
+(1,1,2,'2025-11-17 20:00:00','2025-11-17 23:01:00',110000,'MO_BAN');
 
 -- 12) VE
 -- Ve cho suat 1, phong 1 – dùng gia fix cho dễ test
 INSERT IGNORE INTO ve (ma_suat_chieu, ma_ghe, gia_ban, trang_thai, ban_luc)
 SELECT 1, ma_ghe,
-  CASE 
-    WHEN ma_loai_ghe = 1 THEN  80000
-    WHEN ma_loai_ghe = 2 THEN 120000
-    WHEN ma_loai_ghe = 3 THEN 160000
-  END,
-  CASE 
-    WHEN ma_ghe <= 15 THEN 'DA_BAN'
-    WHEN ma_ghe <= 20 THEN 'GIU_CHO'
-    ELSE 'SAN_SANG'
-  END,
-  CASE 
-    WHEN ma_ghe <= 15 THEN '2024-11-15 10:30:00'
-    ELSE NULL
-  END
+ CASE 
+   WHEN ma_loai_ghe = 1 THEN 80000
+   WHEN ma_loai_ghe = 2 THEN 120000
+   WHEN ma_loai_ghe = 3 THEN 160000
+ END,
+ CASE 
+   WHEN ma_ghe <= 15 THEN 'DA_BAN'
+   WHEN ma_ghe <= 20 THEN 'GIU_CHO'
+   ELSE 'SAN_SANG'
+ END,
+ CASE 
+   WHEN ma_ghe <= 15 THEN '2025-11-15 10:30:00'
+   ELSE NULL
+ END
 FROM ghe WHERE ma_phong = 1;
 
 -- Ve cho cac suat chieu 2–10
@@ -277,12 +278,12 @@ INSERT IGNORE INTO khuyen_mai (ma_code, kieu_giam, gia_tri_giam, bat_dau_luc, ke
 -- Giả định: don_hang có cột: ma_khach_hang, ma_nhan_vien, tao_luc, kenh, trang_thai (TINYINT), tong_tien
 -- 1 = Đã thanh toán, 0 = Đã hủy, 2 = Chờ xử lý
 INSERT IGNORE INTO don_hang (ma_khach_hang, ma_nhan_vien, tao_luc, kenh, trang_thai, tong_tien) VALUES
-(1, 2, '2024-11-15 10:00:00', 'TRUC_TUYEN', 1, 250000),
-(2, 2, '2024-11-15 11:30:00', 'TRUC_TUYEN', 1, 340000),
-(3, 3, '2024-11-15 14:20:00', 'TRUC_TIEP',  1, 180000),
-(1, 2, '2024-11-16 09:00:00', 'TRUC_TUYEN', 1, 420000),
-(4, 3, '2024-11-16 10:30:00', 'TRUC_TIEP',  1, 160000),
-(5, 2, '2024-11-16 15:45:00', 'TRUC_TUYEN', 1, 295000);
+(1,2,'2025-11-15 10:00:00','TRUC_TUYEN',1,250000),
+(2,2,'2025-11-15 11:30:00','TRUC_TUYEN',1,340000),
+(3,3,'2025-11-15 14:20:00','TRUC_TIEP',1,180000),
+(1,2,'2025-11-16 09:00:00','TRUC_TUYEN',1,420000),
+(4,3,'2025-11-16 10:30:00','TRUC_TIEP',1,160000),
+(5,2,'2025-11-16 15:45:00','TRUC_TUYEN',1,295000);
 
 -- 18) DON_VE – Ticket orders
 INSERT IGNORE INTO don_ve (ma_don_hang, ma_ve, don_gia) VALUES
@@ -305,12 +306,12 @@ INSERT IGNORE INTO hang_hoa (ma_don_hang, ma_san_pham, ma_combo, so_luong, don_g
 
 -- 20) THANH_TOAN
 INSERT IGNORE INTO thanh_toan (ma_don_hang, so_tien, phuong_thuc, trang_thai, thanh_toan_luc, ma_tham_chieu) VALUES
-(1, 250000, 'VI_DIEN_TU', 'THANH_CONG', '2024-11-15 10:02:00', 'MOMO_TXN_001'),
-(2, 340000, 'THE',        'THANH_CONG', '2024-11-15 11:32:00', 'CARD_TXN_002'),
-(3, 180000, 'TIEN_MAT',   'THANH_CONG', '2024-11-15 14:22:00', NULL),
-(4, 420000, 'CHUYEN_KHOAN','THANH_CONG','2024-11-16 09:05:00', 'BANK_TXN_003'),
-(5, 160000, 'TIEN_MAT',   'THANH_CONG', '2024-11-16 10:32:00', NULL),
-(6, 295000, 'VI_DIEN_TU', 'THANH_CONG', '2024-11-16 15:47:00', 'MOMO_TXN_004');
+(1,250000,'VI_DIEN_TU','THANH_CONG','2025-11-15 10:02:00','MOMO_TXN_001'),
+(2,340000,'THE','THANH_CONG','2025-11-15 11:32:00','CARD_TXN_002'),
+(3,180000,'TIEN_MAT','THANH_CONG','2025-11-15 14:22:00',NULL),
+(4,420000,'CHUYEN_KHOAN','THANH_CONG','2025-11-16 09:05:00','BANK_TXN_003'),
+(5,160000,'TIEN_MAT','THANH_CONG','2025-11-16 10:32:00',NULL),
+(6,295000,'VI_DIEN_TU','THANH_CONG','2025-11-16 15:47:00','MOMO_TXN_004');
 
 -- 21) DON_KHUYEN_MAI
 INSERT IGNORE INTO don_khuyen_mai (ma_don_hang, ma_khuyen_mai) VALUES
@@ -319,6 +320,10 @@ INSERT IGNORE INTO don_khuyen_mai (ma_don_hang, ma_khuyen_mai) VALUES
 (6, 2);
 
 SET FOREIGN_KEY_CHECKS = 1;
+UPDATE khuyen_mai
+SET bat_dau_luc  = CONCAT('2025', SUBSTRING(bat_dau_luc,5)),
+    ket_thuc_luc = CONCAT('2025', SUBSTRING(ket_thuc_luc,5))
+WHERE YEAR(bat_dau_luc)=2024;
 
 -- Kiểm tra nhanh
 SELECT 'Tong so tai khoan:'   AS Thong_ke, COUNT(*) AS So_luong FROM tai_khoan

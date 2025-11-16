@@ -299,51 +299,121 @@ public class StatisticsController {
      * Sử dụng stored procedure sp_tong_quan_doanh_thu
      */
     private void loadSummaryCards(LocalDate fromDate, LocalDate toDate) {
-        try (Connection conn = DBConnection.getConnection()) {
-            if (conn == null) {
-                showAlert("Không thể kết nối database!");
-                return;
-            }
-
-            // Gọi stored procedure
-            String sql = "{CALL sp_tong_quan_doanh_thu(?, ?)}";
-            try (CallableStatement cs = conn.prepareCall(sql)) {
-                cs.setDate(1, Date.valueOf(fromDate));
-                cs.setDate(2, Date.valueOf(toDate));
-                
-                ResultSet rs = cs.executeQuery();
-                if (rs.next()) {
-                    // Dữ liệu kỳ hiện tại
-                    currentRevenue = rs.getDouble("tong_doanh_thu");
-                    currentTickets = rs.getInt("tong_ve_ban");
-                    currentCustomers = rs.getInt("khach_hang_moi");
-                    currentScreenings = rs.getInt("tong_suat_chieu");
-                    
-                    // Dữ liệu kỳ trước
-                    double prevRevenue = rs.getDouble("doanh_thu_ky_truoc");
-                    int prevTickets = rs.getInt("ve_ban_ky_truoc");
-                    int prevCustomers = rs.getInt("khach_hang_ky_truoc");
-                    int prevScreenings = rs.getInt("suat_chieu_ky_truoc");
-                    
-                    // Cập nhật UI
-                    totalRevenueLabel.setText(currencyFormat.format(currentRevenue) + " VNĐ");
-                    totalTicketsLabel.setText(currentTickets + " vé");
-                    newCustomersLabel.setText(currentCustomers + " người");
-                    totalScreeningsLabel.setText(currentScreenings + " suất");
-                    
-                    // Cập nhật % thay đổi
-                    updateChangeLabel(revenueChangeLabel, currentRevenue, prevRevenue);
-                    updateChangeLabel(ticketsChangeLabel, currentTickets, prevTickets);
-                    updateChangeLabel(customersChangeLabel, currentCustomers, prevCustomers);
-                    updateChangeLabel(screeningsChangeLabel, currentScreenings, prevScreenings);
-                }
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            showAlert("Lỗi khi tải dữ liệu thống kê: " + e.getMessage());
+    try (Connection conn = DBConnection.getConnection()) {
+        if (conn == null) {
+            showAlert("Không thể kết nối database!");
+            return;
         }
+
+        // Sử dụng function thay vì stored procedure
+        String sql = """
+            SELECT 
+                fn_tinh_doanh_thu(?, ?) AS tong_doanh_thu,
+                fn_tinh_doanh_thu(
+                    DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY), 
+                    DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY)
+                ) AS doanh_thu_ky_truoc,
+                (SELECT COUNT(*) FROM ve 
+                 WHERE trang_thai = 'DA_BAN' 
+                 AND DATE(ban_luc) BETWEEN ? AND ?) AS tong_ve_ban,
+                (SELECT COUNT(*) FROM ve 
+                 WHERE trang_thai = 'DA_BAN' 
+                 AND DATE(ban_luc) BETWEEN DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY) 
+                                       AND DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY)) AS ve_ban_ky_truoc,
+                (SELECT COUNT(*) FROM khach_hang 
+                 WHERE DATE(tao_luc) BETWEEN ? AND ?) AS khach_hang_moi,
+                (SELECT COUNT(*) FROM khach_hang 
+                 WHERE DATE(tao_luc) BETWEEN DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY) 
+                                         AND DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY)) AS khach_hang_ky_truoc,
+                (SELECT COUNT(*) FROM suat_chieu 
+                 WHERE DATE(bat_dau_luc) BETWEEN ? AND ?) AS tong_suat_chieu,
+                (SELECT COUNT(*) FROM suat_chieu 
+                 WHERE DATE(bat_dau_luc) BETWEEN DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY) 
+                                             AND DATE_SUB(?, INTERVAL DATEDIFF(?, ?) DAY)) AS suat_chieu_ky_truoc
+        """;
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            Date from = Date.valueOf(fromDate);
+            Date to = Date.valueOf(toDate);
+            
+            int idx = 1;
+            // Doanh thu kỳ hiện tại
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            
+            // Doanh thu kỳ trước
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            
+            // Vé bán kỳ hiện tại
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            
+            // Vé bán kỳ trước
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            
+            // Khách hàng mới kỳ hiện tại
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            
+            // Khách hàng kỳ trước
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            
+            // Suất chiếu kỳ hiện tại
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            
+            // Suất chiếu kỳ trước
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, from);
+            ps.setDate(idx++, to);
+            ps.setDate(idx++, from);
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                currentRevenue = rs.getDouble("tong_doanh_thu");
+                currentTickets = rs.getInt("tong_ve_ban");
+                currentCustomers = rs.getInt("khach_hang_moi");
+                currentScreenings = rs.getInt("tong_suat_chieu");
+                
+                double prevRevenue = rs.getDouble("doanh_thu_ky_truoc");
+                int prevTickets = rs.getInt("ve_ban_ky_truoc");
+                int prevCustomers = rs.getInt("khach_hang_ky_truoc");
+                int prevScreenings = rs.getInt("suat_chieu_ky_truoc");
+                
+                totalRevenueLabel.setText(currencyFormat.format(currentRevenue) + " VNĐ");
+                totalTicketsLabel.setText(currentTickets + " vé");
+                newCustomersLabel.setText(currentCustomers + " người");
+                totalScreeningsLabel.setText(currentScreenings + " suất");
+                
+                updateChangeLabel(revenueChangeLabel, currentRevenue, prevRevenue);
+                updateChangeLabel(ticketsChangeLabel, currentTickets, prevTickets);
+                updateChangeLabel(customersChangeLabel, currentCustomers, prevCustomers);
+                updateChangeLabel(screeningsChangeLabel, currentScreenings, prevScreenings);
+            }
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        showAlert("Lỗi khi tải dữ liệu thống kê: " + e.getMessage());
     }
+}
 
     /**
      * Sử dụng stored procedure sp_doanh_thu_theo_ngay

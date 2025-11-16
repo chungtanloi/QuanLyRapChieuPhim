@@ -294,6 +294,29 @@ MODIFY COLUMN don_gia BIGINT NOT NULL;
 -- 3. BẢNG don_combo - Thêm cột don_gia (nếu chỉ có gia_ban)
 -- =====================================================
 
+-- 1) Thêm cột ma_nhan_vien (cho phép NULL để không bị lỗi dữ liệu cũ)
+ALTER TABLE don_hang
+  ADD COLUMN ma_nhan_vien BIGINT NULL AFTER ma_khach_hang;
+
+-- 2) Thêm khóa ngoại sang bảng nhan_vien
+ALTER TABLE don_hang
+  ADD CONSTRAINT fk_donhang_nhanvien
+    FOREIGN KEY (ma_nhan_vien) REFERENCES nhan_vien(ma_nhan_vien);
+
+-- Bảng chi tiết combo theo từng đơn hàng
+CREATE TABLE don_combo (
+    ma_don_hang BIGINT NOT NULL,
+    ma_combo    BIGINT NOT NULL,
+    so_luong    INT    NOT NULL DEFAULT 1,
+    gia_ban     DECIMAL(12,2) NOT NULL,
+
+    -- Không nhất thiết cần khóa tự tăng vì code KHÔNG dùng,
+    -- dùng khóa chính tổng hợp cho gọn:
+    PRIMARY KEY (ma_don_hang, ma_combo)
+
+    
+);
+
 -- Kiểm tra cột nào đang tồn tại
 DESC don_combo;
 
@@ -338,26 +361,3 @@ END$$
 DELIMITER ;
 
 USE qlrapchieuphim;
-
--- 1) Thêm cột ma_nhan_vien (cho phép NULL để không bị lỗi dữ liệu cũ)
-ALTER TABLE don_hang
-  ADD COLUMN ma_nhan_vien BIGINT NULL AFTER ma_khach_hang;
-
--- 2) Thêm khóa ngoại sang bảng nhan_vien
-ALTER TABLE don_hang
-  ADD CONSTRAINT fk_donhang_nhanvien
-    FOREIGN KEY (ma_nhan_vien) REFERENCES nhan_vien(ma_nhan_vien);
-
--- Bảng chi tiết combo theo từng đơn hàng
-CREATE TABLE don_combo (
-    ma_don_hang BIGINT NOT NULL,
-    ma_combo    BIGINT NOT NULL,
-    so_luong    INT    NOT NULL DEFAULT 1,
-    gia_ban     DECIMAL(12,2) NOT NULL,
-
-    -- Không nhất thiết cần khóa tự tăng vì code KHÔNG dùng,
-    -- dùng khóa chính tổng hợp cho gọn:
-    PRIMARY KEY (ma_don_hang, ma_combo)
-
-    
-);

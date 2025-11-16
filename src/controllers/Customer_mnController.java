@@ -11,12 +11,10 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
-
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-
 import database.DBConnection;
 
 public class Customer_mnController {
@@ -28,7 +26,8 @@ public class Customer_mnController {
     @FXML private Label inactiveCustomersLabel;
     @FXML private Label activeAccountsLabel;
     @FXML private TableView<CustomerRow> customerTable;
-    @FXML private TableColumn<CustomerRow, Number> colMaKhachHang;
+
+    @FXML private TableColumn<CustomerRow, Long> colMaKhachHang;
     @FXML private TableColumn<CustomerRow, String> colHoTen;
     @FXML private TableColumn<CustomerRow, String> colEmail;
     @FXML private TableColumn<CustomerRow, String> colSoDienThoai;
@@ -51,7 +50,7 @@ public class Customer_mnController {
     }
 
     private void setupTableColumns() {
-        colMaKhachHang.setCellValueFactory(c -> c.getValue().maKhachHangProperty());
+        colMaKhachHang.setCellValueFactory(c -> c.getValue().maKhachHangProperty().asObject());
         colHoTen.setCellValueFactory(c -> c.getValue().hoTenProperty());
         colEmail.setCellValueFactory(c -> c.getValue().emailProperty());
         colSoDienThoai.setCellValueFactory(c -> c.getValue().soDienThoaiProperty());
@@ -84,8 +83,7 @@ public class Customer_mnController {
         StringBuilder sql = new StringBuilder(
             "SELECT kh.ma_khach_hang, kh.ngay_sinh, kh.diem_tich_luy, " +
             "tk.ho_ten, tk.email, tk.so_dien_thoai, tk.hoat_dong " +
-            "FROM khach_hang kh " +
-            "JOIN tai_khoan tk ON tk.ma_tai_khoan = kh.ma_tai_khoan "
+            "FROM khach_hang kh JOIN tai_khoan tk ON tk.ma_tai_khoan = kh.ma_tai_khoan "
         );
 
         if (keyword != null) {
@@ -114,8 +112,7 @@ public class Customer_mnController {
                     String ngayStr = (ngaySinh == null) ? "" : ngaySinh.toLocalDate().format(DATE_FMT);
                     String trangThai = (hoatDong == 1) ? "Hoạt động" : "Ngừng";
 
-                    data.add(new CustomerRow(maKH, hoTen, email, sdt, ngayStr,
-                            diem.toString(), trangThai));
+                    data.add(new CustomerRow(maKH, hoTen, email, sdt, ngayStr, diem.toString(), trangThai));
                 }
             }
         } catch (SQLException e) {
@@ -125,11 +122,8 @@ public class Customer_mnController {
 
     private void updateStatistics() {
         String sql =
-            "SELECT COUNT(*) AS total, " +
-            "SUM(tk.hoat_dong = 1) AS active, " +
-            "SUM(tk.hoat_dong = 0) AS inactive " +
-            "FROM khach_hang kh " +
-            "JOIN tai_khoan tk ON tk.ma_tai_khoan = kh.ma_tai_khoan";
+            "SELECT COUNT(*) AS total, SUM(tk.hoat_dong=1) AS active, SUM(tk.hoat_dong=0) AS inactive " +
+            "FROM khach_hang kh LEFT JOIN tai_khoan tk ON tk.ma_tai_khoan = kh.ma_tai_khoan";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -172,12 +166,12 @@ public class Customer_mnController {
     private boolean updateCustomer(long maKH, String hoTen, String email,
                                    String sdt, Date ngaySinh, int hoatDong) {
         String sql =
-            "UPDATE tai_khoan tk " +
-            "JOIN khach_hang kh ON kh.ma_tai_khoan = tk.ma_tai_khoan " +
+            "UPDATE tai_khoan tk JOIN khach_hang kh ON kh.ma_tai_khoan = tk.ma_tai_khoan " +
             "SET tk.ho_ten=?, tk.email=?, tk.so_dien_thoai=?, tk.hoat_dong=?, kh.ngay_sinh=? " +
             "WHERE kh.ma_khach_hang=?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
+
             ps.setString(1, hoTen);
             ps.setString(2, email);
             ps.setString(3, sdt);
@@ -185,6 +179,7 @@ public class Customer_mnController {
             ps.setDate(5, ngaySinh);
             ps.setLong(6, maKH);
             return ps.executeUpdate() > 0;
+
         } catch (SQLException e) {
             showError("Không thể cập nhật khách hàng", e);
             return false;
@@ -193,8 +188,7 @@ public class Customer_mnController {
 
     private void toggleActive(long maKH) {
         String sql =
-            "UPDATE tai_khoan tk " +
-            "JOIN khach_hang kh ON kh.ma_tai_khoan = tk.ma_tai_khoan " +
+            "UPDATE tai_khoan tk JOIN khach_hang kh ON kh.ma_tai_khoan = tk.ma_tai_khoan " +
             "SET tk.hoat_dong = 1 - tk.hoat_dong WHERE kh.ma_khach_hang=?";
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
