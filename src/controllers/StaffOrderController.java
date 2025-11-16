@@ -578,14 +578,15 @@ public class StaffOrderController {
 
     private void insertDonCombo(Connection conn, int maDon, int maSP, int sl, long giaBan) throws SQLException {
         String sql = """
-            INSERT INTO don_combo(ma_don_hang, ma_combo, so_luong, don_gia)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO don_combo(ma_don_hang, ma_combo, so_luong, don_gia, gia_ban)
+            VALUES (?, ?, ?, ?,?)
         """;
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, maDon);
             ps.setInt(2, maSP);
             ps.setInt(3, sl);
             ps.setLong(4, giaBan);
+            ps.setLong(5, giaBan);
             ps.executeUpdate();
         }
     }

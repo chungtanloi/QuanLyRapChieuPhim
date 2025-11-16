@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS mat_khau (
 --   (MySQL không có IF EXISTS cho DROP FOREIGN KEY trước 8.0.19;
 --    dòng dưới dùng comment versioned: chỉ chạy nếu bản hỗ trợ)
 --   Nếu báo không tồn tại thì bỏ qua.
-/*!80019 ALTER TABLE tai_khoan DROP FOREIGN KEY IF EXISTS fk_tk_mk */;
+
 
 ALTER TABLE tai_khoan
   MODIFY COLUMN ma_tai_khoan BIGINT UNSIGNED NOT NULL,
@@ -91,3 +91,4 @@ WHERE DATE(sc.bat_dau_luc) = CURDATE();
 -- (Tùy chọn) Kiểm tra nhanh
 -- SELECT COUNT(*) AS so_ve, SUM(don_gia) AS doanh_thu FROM don_ve;
 -- SELECT * FROM don_hang ORDER BY ma_don_hang DESC LIMIT 10;
+select * from tai_khoan;

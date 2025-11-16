@@ -297,3 +297,14 @@ ALTER TABLE phim
 ADD COLUMN poster_url VARCHAR(255) NULL 
 AFTER mo_ta;
 
+ALTER TABLE tai_khoan
+    MODIFY email VARCHAR(100) NOT NULL DEFAULT '';
+ALTER TABLE tai_khoan
+    MODIFY mat_khau_ma VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE tai_khoan
+    MODIFY so_dien_thoai VARCHAR(100) NOT NULL DEFAULT '';
+    
+    ALTER TABLE tai_khoan
+    MODIFY vai_tro VARCHAR(100) NOT NULL DEFAULT '';
+    ALTER TABLE tai_khoan
+    MODIFY ho_ten VARCHAR(100) NOT NULL DEFAULT '';

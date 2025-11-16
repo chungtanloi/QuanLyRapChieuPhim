@@ -127,43 +127,6 @@ CREATE TABLE doanh_thu (
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- CHÈN DỮ LIỆU MẪU
-
--- Chèn dữ liệu loại khách hàng
-INSERT INTO loai_khach_hang (ten_loai_khach_hang, ti_le_giam_gia, diem_toi_thieu, mo_ta) VALUES
-('Thường', 0.00, 0, 'Khách hàng mới'),
-('Bạc', 0.05, 100, 'Khách hàng thân thiết'),
-('Vàng', 0.10, 500, 'Khách hàng VIP'),
-('Kim Cương', 0.15, 1000, 'Khách hàng cao cấp');
-
--- Chèn dữ liệu bảng giá vé
-INSERT INTO bang_gia_ve (ma_loai_khach_hang, ma_dinh_dang_phim, gia_ve, ngay_ap_dung, trang_thai) VALUES
--- Giá vé cho loại Thường
-(1, 1, 60000, '2024-01-01', 'AP_DUNG'),
-(1, 2, 80000, '2024-01-01', 'AP_DUNG'),
-(1, 3, 100000, '2024-01-01', 'AP_DUNG'),
-
--- Giá vé cho loại Bạc (giảm 5%)
-(2, 1, 57000, '2024-01-01', 'AP_DUNG'),
-(2, 2, 76000, '2024-01-01', 'AP_DUNG'),
-(2, 3, 95000, '2024-01-01', 'AP_DUNG'),
-
--- Giá vé cho loại Vàng (giảm 10%)
-(3, 1, 54000, '2024-01-01', 'AP_DUNG'),
-(3, 2, 72000, '2024-01-01', 'AP_DUNG'),
-(3, 3, 90000, '2024-01-01', 'AP_DUNG'),
-
--- Giá vé cho loại Kim Cương (giảm 15%)
-(4, 1, 51000, '2024-01-01', 'AP_DUNG'),
-(4, 2, 68000, '2024-01-01', 'AP_DUNG'),
-(4, 3, 85000, '2024-01-01', 'AP_DUNG');
-
--- Chèn dữ liệu mẫu cho doanh thu (giả sử đã có suất chiếu)
-INSERT IGNORE INTO doanh_thu (ma_suat_chieu, ngay_chieu, so_ve_da_ban, tong_doanh_thu, doanh_thu_thuc) VALUES
-(1, '2024-01-15', 50, 3000000, 3000000),
-(2, '2024-01-15', 30, 2400000, 2400000),
-(3, '2024-01-16', 25, 2000000, 2000000);
-
 
 use qlrapchieuphim;
 SET NAMES utf8mb4;
@@ -605,43 +568,6 @@ ORDER BY c.ma_combo;
 
 
 
--- Thêm dữ liệu mẫu cho khuyến mãi với ngày giờ hiện tại
-INSERT INTO khuyen_mai (ma_code, kieu_giam, gia_tri_giam, bat_dau_luc, ket_thuc_luc, don_toi_thieu, hoat_dong) VALUES
--- Khuyến mãi ĐANG DIỄN RA (bắt đầu từ hôm qua, kết thúc sau 7 ngày)
-('SALE_NOW1', 'PHAN_TRAM', 20.00, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 7 DAY), 150000.00, 1),
-('SALE_NOW2', 'SO_TIEN', 50000.00, DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_ADD(NOW(), INTERVAL 30 DAY), 200000.00, 1),
-
--- Khuyến mãi SẮP DIỄN RA (bắt đầu sau 1 ngày)
-('SALE_SOON1', 'PHAN_TRAM', 25.00, DATE_ADD(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 15 DAY), 180000.00, 1),
-('SALE_SOON2', 'SO_TIEN', 35000.00, DATE_ADD(NOW(), INTERVAL 3 DAY), DATE_ADD(NOW(), INTERVAL 20 DAY), 120000.00, 1),
-
--- Khuyến mãi ĐÃ HẾT HẠN (kết thúc cách đây 1 ngày)
-('SALE_END1', 'PHAN_TRAM', 15.00, DATE_SUB(NOW(), INTERVAL 10 DAY), DATE_SUB(NOW(), INTERVAL 1 DAY), 100000.00, 0),
-('SALE_END2', 'SO_TIEN', 20000.00, DATE_SUB(NOW(), INTERVAL 15 DAY), DATE_SUB(NOW(), INTERVAL 2 DAY), 80000.00, 0),
-
--- Khuyến mãi theo giờ (hôm nay từ 8h-12h)
-('MORNING_SPECIAL', 'PHAN_TRAM', 10.00, 
- CONCAT(CURDATE(), ' 08:00:00'), 
- CONCAT(CURDATE(), ' 12:00:00'), 
- 80000.00, 1),
-
--- Khuyến mãi theo giờ (tối nay từ 18h-23h)
-('EVENING_SPECIAL', 'SO_TIEN', 25000.00, 
- CONCAT(CURDATE(), ' 18:00:00'), 
- CONCAT(CURDATE(), ' 23:00:00'), 
- 120000.00, 1),
-
--- Khuyến mãi cuối tuần (thứ 7, chủ nhật)
-('WEEKEND_FUN', 'PHAN_TRAM', 15.00, 
- DATE_SUB(NOW(), INTERVAL 1 DAY),  -- Bắt đầu từ hôm qua
- DATE_ADD(NOW(), INTERVAL 2 DAY),  -- Kết thúc sau 2 ngày
- 100000.00, 1),
-
--- Khuyến mãi thành viên (luôn áp dụng)
-('MEMBER_VIP', 'PHAN_TRAM', 10.00, DATE_SUB(NOW(), INTERVAL 30 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), 0.00, 1),
-('MEMBER_GOLD', 'PHAN_TRAM', 15.00, DATE_SUB(NOW(), INTERVAL 30 DAY), DATE_ADD(NOW(), INTERVAL 30 DAY), 0.00, 1);
-
-
 
 -- 1. Cập nhật loại khách hàng cho các khách hàng đã có
 UPDATE khach_hang kh
@@ -683,26 +609,6 @@ SELECT
 FROM khach_hang kh
 JOIN tai_khoan tk ON kh.ma_tai_khoan = tk.ma_tai_khoan
 WHERE tk.vai_tro = 'KHACH_HANG';
-
--- Thêm thêm vài đơn hàng vãng lai
-INSERT INTO don_hang (ma_khach_hang, dat_luc, kenh, trang_thai, ghi_chu, tong_tien) VALUES
-(NULL, DATE_SUB(NOW(), INTERVAL 2 DAY), 'TRUC_TIEP', 'DA_THANH_TOAN', 'Khách vãng lai - vé 2D', 80000.00),
-(NULL, DATE_SUB(NOW(), INTERVAL 1 DAY), 'TRUC_TIEP', 'CHO_THANH_TOAN', 'Khách vãng lai - đang chờ', 120000.00),
-(NULL, NOW(), 'TRUC_TIEP', 'DA_HUY', 'Khách hủy vé', 95000.00);
-
--- 3. Thêm khuyến mãi (nếu chưa có)
-INSERT IGNORE INTO khuyen_mai (ma_code, kieu_giam, gia_tri_giam, bat_dau_luc, ket_thuc_luc, don_toi_thieu, hoat_dong) VALUES
-('SALE20', 'PHAN_TRAM', 20.00, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 7 DAY), 150000.00, 1),
-('GIAM50K', 'SO_TIEN', 50000.00, DATE_SUB(NOW(), INTERVAL 2 HOUR), DATE_ADD(NOW(), INTERVAL 30 DAY), 200000.00, 1),
-('FREESHIP', 'SO_TIEN', 25000.00, DATE_SUB(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 15 DAY), 100000.00, 1),
-('HOTSALE', 'PHAN_TRAM', 30.00, DATE_ADD(NOW(), INTERVAL 1 DAY), DATE_ADD(NOW(), INTERVAL 10 DAY), 300000.00, 1);
-
--- 4. Liên kết đơn hàng với khuyến mãi
-INSERT IGNORE INTO don_khuyen_mai (ma_don_hang, ma_khuyen_mai) VALUES
-(1, 1),  -- Đơn 1 dùng SALE20
-(2, 2),  -- Đơn 2 dùng GIAM50K
-(3, 1),  -- Đơn 3 dùng SALE20
-(4, 3);  -- Đơn 4 dùng FREESHIP
 
 
 

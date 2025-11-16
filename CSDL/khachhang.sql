@@ -1,146 +1,140 @@
-/* 0️⃣ Chọn DB */
 USE qlrapchieuphim;
 
-/* 1️⃣ Xóa trigger cũ trên khach_hang, tai_khoan */
+-- ============================================
+-- 1. PROCEDURE: Đăng ký khách hàng (Signup)
+-- ============================================
+DROP PROCEDURE IF EXISTS sp_dangky_khachhang;
 DELIMITER $$
-DROP PROCEDURE IF EXISTS drop_triggers_kh_tk $$
-CREATE PROCEDURE drop_triggers_kh_tk()
+
+CREATE PROCEDURE sp_dangky_khachhang (
+    IN p_email      VARCHAR(120),
+    IN p_matkhau    VARCHAR(255),
+    IN p_hoten      VARCHAR(120)
+)
 BEGIN
-  DROP TRIGGER IF EXISTS tg_tai_khoan_bu;
-  DROP TRIGGER IF EXISTS tg_khach_hang_bu;
+    DECLARE tk_count INT DEFAULT 0;
+
+    -- Kiểm tra email trùng
+    SELECT COUNT(*) INTO tk_count
+    FROM tai_khoan
+    WHERE email = p_email;
+
+    IF tk_count > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Email này đã tồn tại!';
+    ELSE
+        INSERT INTO tai_khoan (
+            email,
+            mat_khau_ma,
+            ho_ten,
+            vai_tro,
+            hoat_dong,
+            tao_luc,
+            cap_nhat_luc
+        )
+        VALUES (
+            p_email,
+            p_matkhau,
+            p_hoten,
+            'KHACH_HANG',
+            1,
+            NOW(),
+            NOW()
+        );
+        
+    END IF;
 END$$
+
 DELIMITER ;
 
-CALL drop_triggers_kh_tk();
-
-
-/* 2️⃣ Trigger cập nhật thời gian */
+-- ============================================
+-- 2. PROCEDURE: Đăng nhập (khách hàng)
+-- ============================================
+DROP PROCEDURE IF EXISTS sp_dangnhap;
 DELIMITER $$
-CREATE TRIGGER tg_tai_khoan_bu
-BEFORE UPDATE ON tai_khoan
-FOR EACH ROW
-BEGIN
-  SET NEW.cap_nhat_luc = NOW();
-END $$
 
-CREATE TRIGGER tg_khach_hang_bu
-BEFORE UPDATE ON khach_hang
-FOR EACH ROW
-BEGIN
-  SET NEW.cap_nhat_luc = NOW();
-END $$
-DELIMITER ;
-
-
-/* 3️⃣ PROC thêm khách hàng */
-DELIMITER $$
-DROP PROCEDURE IF EXISTS proc_kh_insert $$
-CREATE PROCEDURE proc_kh_insert(
-    IN  p_ho_ten        VARCHAR(200),
-    IN  p_email         VARCHAR(120),
-    IN  p_sdt           VARCHAR(20),
-    IN  p_ngay_sinh     DATE,
-    IN  p_hoat_dong     TINYINT,
-    IN  p_mat_khau      VARCHAR(255),
-    OUT p_ma_khach_hang BIGINT
+CREATE PROCEDURE sp_dangnhap (
+    IN p_email      VARCHAR(120),
+    IN p_matkhau    VARCHAR(255)
 )
 BEGIN
-    DECLARE v_ma_tai_khoan BIGINT;
-
-    /* 1. Thêm vào bảng tai_khoan */
-    INSERT INTO tai_khoan(ho_ten, email, so_dien_thoai, hoat_dong, mat_khau_ma, vai_tro, tao_luc, cap_nhat_luc)
-    VALUES (p_ho_ten, p_email, p_sdt, p_hoat_dong, p_mat_khau, 'KHACH_HANG', NOW(), NOW());
-    SET v_ma_tai_khoan = LAST_INSERT_ID();
-
-    /* 2. Thêm vào bảng khach_hang */
-    INSERT INTO khach_hang(ma_tai_khoan, diem_tich_luy, ngay_sinh, tao_luc, cap_nhat_luc)
-    VALUES (v_ma_tai_khoan, 0, p_ngay_sinh, NOW(), NOW());
-
-    SET p_ma_khach_hang = LAST_INSERT_ID();
-END $$
-DELIMITER ;
-
-
-/* 4️⃣ PROC cập nhật khách hàng */
-DELIMITER $$
-DROP PROCEDURE IF EXISTS proc_kh_update $$
-CREATE PROCEDURE proc_kh_update(
-    IN p_ma_khach_hang  BIGINT,
-    IN p_ho_ten         VARCHAR(200),
-    IN p_email          VARCHAR(120),
-    IN p_sdt            VARCHAR(20),
-    IN p_ngay_sinh      DATE,
-    IN p_hoat_dong      TINYINT
-)
-BEGIN
-    DECLARE v_ma_tai_khoan BIGINT;
-
-    SELECT ma_tai_khoan INTO v_ma_tai_khoan
-    FROM khach_hang WHERE ma_khach_hang = p_ma_khach_hang LIMIT 1;
-
-    IF v_ma_tai_khoan IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Không tìm thấy khách hàng hoặc tài khoản liên kết';
-    END IF;
-
-    /* Cập nhật bảng tai_khoan */
-    UPDATE tai_khoan
-       SET ho_ten        = p_ho_ten,
-           email         = p_email,
-           so_dien_thoai = p_sdt,
-           hoat_dong     = p_hoat_dong
-     WHERE ma_tai_khoan = v_ma_tai_khoan;
-
-    /* Cập nhật bảng khach_hang */
-    UPDATE khach_hang
-       SET ngay_sinh = p_ngay_sinh
-     WHERE ma_khach_hang = p_ma_khach_hang;
-END $$
-DELIMITER ;
-
-
-/* 5️⃣ PROC đổi mật khẩu */
-DELIMITER $$
-DROP PROCEDURE IF EXISTS proc_doi_mat_khau_khach_hang $$
-CREATE PROCEDURE proc_doi_mat_khau_khach_hang(
-    IN p_ma_khach_hang BIGINT,
-    IN p_mat_khau_moi  VARCHAR(255)
-)
-BEGIN
-    DECLARE v_ma_tai_khoan BIGINT;
-
-    SELECT ma_tai_khoan INTO v_ma_tai_khoan
-    FROM khach_hang WHERE ma_khach_hang = p_ma_khach_hang LIMIT 1;
-
-    IF v_ma_tai_khoan IS NULL THEN
-        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='Không tìm thấy khách hàng';
-    END IF;
-
-    UPDATE tai_khoan
-       SET mat_khau_ma = p_mat_khau_moi
-     WHERE ma_tai_khoan = v_ma_tai_khoan;
-END $$
-DELIMITER ;
-
-
-/* 6️⃣ PROC bật/tắt hoạt động */
-DELIMITER $$
-DROP PROCEDURE IF EXISTS proc_toggle_hoat_dong_by_ma_kh $$
-CREATE PROCEDURE proc_toggle_hoat_dong_by_ma_kh(IN p_ma_khach_hang BIGINT)
-BEGIN
-    DECLARE v_ma_tai_khoan BIGINT;
-    DECLARE v_curr INT;
-
-    SELECT kh.ma_tai_khoan, tk.hoat_dong
-      INTO v_ma_tai_khoan, v_curr
-    FROM khach_hang kh
-    JOIN tai_khoan tk ON tk.ma_tai_khoan = kh.ma_tai_khoan
-    WHERE kh.ma_khach_hang = p_ma_khach_hang
+    SELECT vai_tro, ho_ten
+    FROM tai_khoan
+    WHERE email = p_email
+      AND mat_khau_ma = p_matkhau
     LIMIT 1;
+END$$
 
-    IF v_ma_tai_khoan IS NOT NULL THEN
-        UPDATE tai_khoan
-           SET hoat_dong = CASE WHEN v_curr = 1 THEN 0 ELSE 1 END
-         WHERE ma_tai_khoan = v_ma_tai_khoan;
+DELIMITER ;
+
+-- ============================================
+-- 3. PROCEDURE: Đăng nhập admin / nhân viên
+-- ============================================
+DROP PROCEDURE IF EXISTS sp_dangnhap_admin_nhanvien;
+DELIMITER $$
+
+CREATE PROCEDURE sp_dangnhap_admin_nhanvien (
+    IN p_email      VARCHAR(120),
+    IN p_matkhau    VARCHAR(255)
+)
+BEGIN
+    DECLARE tk_count INT DEFAULT 0;
+    DECLARE active_status TINYINT DEFAULT 0;
+
+    -- Kiểm tra tài khoản có phải QUAN_TRI / NHAN_VIEN không
+    SELECT COUNT(*) INTO tk_count
+    FROM tai_khoan
+    WHERE email = p_email
+      AND vai_tro IN ('QUAN_TRI', 'NHAN_VIEN');
+
+    IF tk_count = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Tài khoản không tồn tại hoặc không có quyền truy cập!';
+    ELSE
+        -- Kiểm tra mật khẩu + trạng thái
+        SELECT hoat_dong INTO active_status
+        FROM tai_khoan
+        WHERE email = p_email
+          AND mat_khau_ma = p_matkhau
+        LIMIT 1;
+
+        IF active_status IS NULL THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Sai mật khẩu!';
+        ELSEIF active_status = 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Tài khoản đã bị khóa!';
+        ELSE
+            SELECT vai_tro, ho_ten
+            FROM tai_khoan
+            WHERE email = p_email
+              AND mat_khau_ma = p_matkhau
+              AND hoat_dong = 1
+              AND vai_tro IN ('QUAN_TRI', 'NHAN_VIEN')
+            LIMIT 1;
+        END IF;
     END IF;
-END $$
+END$$
+
+DELIMITER ;
+
+-- ============================================
+-- 4. FUNCTION: fn_ten_tai_khoan
+-- ============================================
+DROP FUNCTION IF EXISTS fn_ten_tai_khoan;
+DELIMITER $$
+
+CREATE FUNCTION fn_ten_tai_khoan(p_ma_tai_khoan BIGINT)
+RETURNS VARCHAR(255)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+  RETURN (
+    SELECT tk.ho_ten
+    FROM tai_khoan tk
+    WHERE tk.ma_tai_khoan = p_ma_tai_khoan
+    LIMIT 1
+  );
+END$$
+
 DELIMITER ;
