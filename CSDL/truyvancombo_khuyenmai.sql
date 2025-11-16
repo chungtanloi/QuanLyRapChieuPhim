@@ -2,6 +2,16 @@
 use qlrapchieuphim;
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
+
+
+SET SQL_SAFE_UPDATES = 0;
+
+DELETE FROM san_pham
+WHERE ten_san_pham = 'Combo Bap + Nước';
+
+-- Sau khi xóa xong, bạn nên bật lại để đảm bảo an toàn
+SET SQL_SAFE_UPDATES = 1;
+
 -- Truy vấn lấy danh sách combo đang hoạt động:
 SELECT 
     ma_combo,
